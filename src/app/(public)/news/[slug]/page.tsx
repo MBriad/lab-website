@@ -4,20 +4,14 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { MediaImage } from "@/components/ui/media-image";
 import { Paragraphs } from "@/components/ui/paragraphs";
-import { api, ApiError, getApiMode } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { formatDateCN } from "@/lib/format";
 import type { NewsPublic } from "@/lib/types/api";
 
-/** Prerender known news pages at build (mock mode); degrade gracefully. */
-export async function generateStaticParams() {
-  if (getApiMode() !== "mock") return [];
-  try {
-    const result = await api.listNews({ page: 1, page_size: 50 });
-    return result.items.map((item) => ({ slug: item.slug }));
-  } catch {
-    return [];
-  }
-}
+// Rendered per request (no `generateStaticParams`): declaring it pushes the
+// route through Next's blocking-prerender pass, where the per-request
+// `cache: "no-store"` fetch in `generateMetadata` fails at the network layer
+// and detail requests end in a bare 500 (see task 09-02, D1).
 
 export async function generateMetadata(
   props: PageProps<"/news/[slug]">,
