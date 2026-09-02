@@ -127,12 +127,15 @@ function AwardItem({ award, delay, priority = false }: AwardItemProps) {
                     alt={`${award.title} ${item.label}`}
                     mode="cover"
                     className={cn(
-                      "border border-hairline",
+                      "rounded-panel border border-hairline bg-white/34",
                       item.portrait ? "aspect-[5/7]" : "aspect-[4/3]",
                     )}
                     sizes="(min-width: 1024px) 260px, 42vw"
                     priority={priority}
-                    imgClassName="object-cover"
+                    imgClassName={cn(
+                      "object-cover",
+                      item.portrait && "!object-contain bg-white/70 p-4",
+                    )}
                   />
                   <figcaption className="mt-2 font-mono text-[10px] tracking-[0.2em] text-ink-faint uppercase">
                     {item.label}
@@ -143,7 +146,7 @@ function AwardItem({ award, delay, priority = false }: AwardItemProps) {
           ) : (
             <div
               aria-hidden
-              className="grid aspect-[4/3] place-items-center border border-hairline bg-surface lg:max-w-[260px]"
+              className="glass-panel grid aspect-[4/3] place-items-center lg:max-w-[260px]"
             >
               <span className="font-mono text-[10px] tracking-[0.3em] text-ink-faint uppercase">
                 NO MEDIA

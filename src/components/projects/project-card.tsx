@@ -20,13 +20,13 @@ export function ProjectCard({ project, priority = false }: ProjectCardProps) {
     <TiltCard className="h-full">
       <Link
         href={`/projects/${project.slug}`}
-        className="group flex h-full flex-col border border-hairline bg-surface transition-colors hover:border-accent/40 hover:shadow-glow-accent"
+        className="glass-panel-strong group flex h-full flex-col overflow-hidden transition-[border-color,box-shadow] duration-500 hover:border-accent/40 hover:shadow-glow-accent"
       >
         <MediaImage
           media={project.cover}
           alt={project.title}
           mode="cover"
-          className="aspect-[3/2] w-full"
+          className="aspect-[3/2] w-full border-b border-hairline bg-white/34"
           sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
           priority={priority}
           imgClassName="transition-transform duration-500 group-hover:scale-[1.04]"

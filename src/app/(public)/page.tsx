@@ -92,7 +92,10 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero settings={home.settings} />
+      <Hero
+        settings={home.settings}
+        heroMedia={home.featuredProjects[0]?.cover ?? null}
+      />
       <IntroSection description={home.settings.description} stats={stats} />
       <ResearchPreview areas={home.researchAreas} />
       <FeaturedProjects projects={home.featuredProjects} />

@@ -40,7 +40,7 @@ export default async function ResearchPage() {
               const mirrored = i % 2 === 1;
               return (
                 <Reveal key={area.id}>
-                  <article className="grid gap-4 border-b border-hairline py-12 first:pt-0 last:border-b-0 lg:grid-cols-12 lg:gap-10">
+                  <article className="group grid gap-4 border-b border-hairline py-12 first:pt-0 last:border-b-0 lg:grid-cols-12 lg:gap-10">
                     <div
                       className={cn(
                         "lg:col-span-4",
@@ -58,7 +58,7 @@ export default async function ResearchPage() {
                       <p className="font-mono text-[11px] tracking-[0.3em] text-accent uppercase">
                         {`AREA.${String(i + 1).padStart(2, "0")} // ${area.slug}`}
                       </p>
-                      <h2 className="mt-3 font-display text-2xl font-semibold sm:text-3xl">
+                      <h2 className="mt-3 font-display text-2xl font-semibold tracking-[-0.035em] transition-colors group-hover:text-accent sm:text-3xl">
                         {area.title}
                       </h2>
                       <p className="mt-4 max-w-3xl leading-8 text-ink-muted">

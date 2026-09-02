@@ -26,14 +26,14 @@ export function LatestNews({ news }: LatestNewsProps) {
               <Reveal key={item.id} delay={i * 90} className="h-full">
                 <Link
                   href={`/news/${item.slug}`}
-                  className="group flex h-full flex-col border border-hairline bg-surface transition-colors hover:border-accent/40"
+                  className="glass-panel-strong group flex h-full flex-col overflow-hidden transition-[border-color,box-shadow] duration-500 hover:border-accent/40 hover:shadow-glow-accent"
                 >
                   {item.cover ? (
                     <MediaImage
                       media={item.cover}
                       alt={item.title}
                       mode="cover"
-                      className="aspect-video w-full"
+                      className="aspect-video w-full border-b border-hairline bg-white/34"
                       sizes="(min-width: 768px) 33vw, 100vw"
                       imgClassName="transition-transform duration-500 group-hover:scale-[1.04]"
                     />

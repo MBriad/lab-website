@@ -71,9 +71,16 @@ export function useMotionPrefs(): MotionPrefs {
     const compute = () => setPrefs(readMotionPrefs());
     compute();
     if (typeof window.matchMedia !== "function") return;
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    mql.addEventListener("change", compute);
-    return () => mql.removeEventListener("change", compute);
+    const reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const pointerQuery = window.matchMedia("(pointer: fine)");
+    reducedQuery.addEventListener("change", compute);
+    pointerQuery.addEventListener("change", compute);
+    window.addEventListener("resize", compute, { passive: true });
+    return () => {
+      reducedQuery.removeEventListener("change", compute);
+      pointerQuery.removeEventListener("change", compute);
+      window.removeEventListener("resize", compute);
+    };
   }, []);
 
   return prefs;

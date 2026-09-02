@@ -23,7 +23,7 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   return (
-    <header className={cn("max-w-3xl", className)}>
+    <header className={cn("public-section-header max-w-3xl", className)}>
       <p className="flex items-center gap-3 font-mono text-xs tracking-[0.3em] text-accent uppercase">
         <span aria-hidden className="h-1.5 w-1.5 bg-accent shadow-glow-accent" />
         {`SEC.${index} // ${code}`}
@@ -51,8 +51,8 @@ export interface PageHeaderProps {
 /** Editorial page opener for sub-pages. */
 export function PageHeader({ code, title, description, meta }: PageHeaderProps) {
   return (
-    <div className="border-b border-hairline bg-surface/30 section-pad">
-      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
+    <div className="public-page-header border-b border-hairline bg-surface/30 section-pad">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <p className="font-mono text-xs tracking-[0.3em] text-accent uppercase">
           {code}
         </p>

@@ -27,9 +27,9 @@ export function IntroSection({ description, stats }: IntroSectionProps) {
               )}
             </Reveal>
             <Reveal delay={180}>
-              <dl className="mt-10 grid grid-cols-2 gap-px border border-hairline bg-hairline sm:grid-cols-4">
+              <dl className="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {stats.map((stat) => (
-                  <div key={stat.label} className="bg-background p-4">
+                  <div key={stat.label} className="glass-chip rounded-panel p-4">
                     <dt className="font-mono text-[10px] tracking-[0.25em] text-ink-faint uppercase">
                       {stat.label}
                     </dt>

@@ -24,7 +24,7 @@ export function Footer({ settings }: FooterProps) {
   );
 
   return (
-    <footer className="border-t border-hairline bg-surface/40">
+    <footer className="public-footer border-t border-hairline bg-white/24">
       <Container width="wide" className="section-pad">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1.2fr_1fr]">
           <div>

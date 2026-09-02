@@ -71,7 +71,7 @@ export default async function NewsDetailPage(
           media={item.cover}
           alt={item.title}
           mode="cover"
-          className="aspect-[21/10] w-full border border-hairline"
+          className="glass-panel-strong aspect-[21/10] w-full overflow-hidden border border-hairline p-1"
           sizes="(min-width: 1024px) 1024px, 100vw"
           priority
         />

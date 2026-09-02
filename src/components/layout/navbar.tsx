@@ -87,10 +87,11 @@ export function Navbar({ labName }: NavbarProps) {
   return (
     <>
       <header
+        data-motion-probe="nav"
         className={cn(
-          "fixed inset-x-0 top-0 z-40 transition-[translate,background-color,border-color,backdrop-filter] duration-300",
+          "public-nav fixed inset-x-0 top-0 z-40 transition-[translate,background-color,border-color,backdrop-filter] duration-300",
           scrolled
-            ? "border-b border-hairline bg-background/85 backdrop-blur-md"
+            ? "border-b border-hairline bg-white/66 shadow-[0_8px_30px_rgba(112,132,205,0.09)] backdrop-blur-xl"
             : "border-b border-transparent",
           docked && !open ? "-translate-y-full" : "translate-y-0",
         )}
@@ -100,10 +101,10 @@ export function Navbar({ labName }: NavbarProps) {
           className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
         >
           <Link href="/" className="flex items-center gap-3" aria-label={`${labName} 首页`}>
-            <span aria-hidden className="relative grid h-9 w-9 place-items-center border border-hairline-strong">
-              <span className="absolute left-0 top-0 h-1.5 w-1.5 border-l border-t border-accent/70" />
-              <span className="absolute bottom-0 right-0 h-1.5 w-1.5 border-b border-r border-accent/70" />
-              <span className="h-1.5 w-1.5 bg-accent shadow-glow-accent animate-breathe" />
+            <span aria-hidden className="relative grid h-9 w-9 place-items-center rounded-[13px] border border-white/80 bg-linear-to-br from-accent/20 via-white/60 to-signal/20 shadow-[0_8px_20px_rgba(113,148,255,0.14)]">
+              <span className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-accent/70" />
+              <span className="absolute right-1.5 bottom-1.5 h-1.5 w-1.5 rounded-full bg-signal/75" />
+              <span className="h-2.5 w-2.5 rotate-45 rounded-[3px] bg-linear-to-br from-accent to-signal shadow-glow-accent" />
             </span>
             <span className="flex flex-col leading-none">
               <span className="font-display text-sm font-semibold tracking-wide">
@@ -140,7 +141,7 @@ export function Navbar({ labName }: NavbarProps) {
             })}
             <Link
               href="/#contact"
-              className="ml-3 rounded-hud border border-accent/50 bg-accent/10 px-4 py-2 font-mono text-xs tracking-[0.18em] text-accent uppercase transition-colors hover:bg-accent/20 hover:text-accent-strong"
+              className="glass-chip ml-3 px-4 py-2 font-mono text-xs tracking-[0.18em] text-accent uppercase transition-[background-color,border-color,box-shadow] hover:border-accent/50 hover:bg-white/75 hover:shadow-glow-accent"
             >
               联系我们
             </Link>
@@ -152,7 +153,7 @@ export function Navbar({ labName }: NavbarProps) {
             aria-expanded={open}
             aria-controls="mobile-menu"
             aria-label="打开导航菜单"
-            className="grid h-10 w-10 place-items-center border border-hairline text-ink md:hidden"
+            className="glass-chip grid h-10 w-10 place-items-center p-0 text-ink md:hidden"
           >
             <span aria-hidden className="flex flex-col gap-1.5">
               <span className="h-px w-5 bg-current" />
@@ -168,7 +169,7 @@ export function Navbar({ labName }: NavbarProps) {
           role="dialog"
           aria-modal="true"
           aria-label="导航菜单"
-          className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-md md:hidden"
+          className="fixed inset-0 z-50 flex flex-col bg-white/94 backdrop-blur-2xl md:hidden"
         >
           <div className="flex h-16 items-center justify-between px-4">
             <span className="font-mono text-xs tracking-[0.28em] text-ink-faint uppercase">
@@ -178,7 +179,7 @@ export function Navbar({ labName }: NavbarProps) {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="关闭导航菜单"
-              className="grid h-10 w-10 place-items-center border border-hairline text-lg text-ink"
+              className="glass-chip grid h-10 w-10 place-items-center p-0 text-lg text-ink"
             >
               ✕
             </button>

@@ -65,7 +65,7 @@ export default async function NewsPage(props: PageProps<"/news">) {
                         media={item.cover}
                         alt={item.title}
                         mode="cover"
-                        className="aspect-video w-full rounded-hud border border-hairline"
+                        className="aspect-video w-full rounded-panel border border-hairline bg-white/34"
                         sizes="(min-width: 640px) 220px, 100vw"
                         priority={page === 1 && i === 0}
                         imgClassName="transition-transform duration-500 group-hover:scale-[1.04]"

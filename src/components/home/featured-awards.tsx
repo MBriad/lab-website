@@ -1,60 +1,237 @@
+"use client";
+
 import Link from "next/link";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Reveal } from "@/components/motion/reveal";
-import { LevelBadge } from "@/components/ui/badges";
+import { prefersReducedMotion } from "@/components/motion/motion-prefs";
+import { CategoryTag, LevelBadge } from "@/components/ui/badges";
 import { Container } from "@/components/ui/container";
 import { MediaImage } from "@/components/ui/media-image";
 import { SectionHeader } from "@/components/ui/section-header";
 import { EmptyState } from "@/components/ui/states";
-import type { AwardPublic } from "@/lib/types/api";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/format";
+import type { AwardPublic, MediaPublic } from "@/lib/types/api";
 
 export interface FeaturedAwardsProps {
   /** Only `is_featured` awards (fetched via `featured: true`). */
   awards: AwardPublic[];
 }
 
-/** SEC.04 — compact editorial teaser of featured awards. */
+interface RailMedia {
+  media: MediaPublic | null;
+  label: string;
+  certificate: boolean;
+}
+
+function getRailMedia(award: AwardPublic): RailMedia {
+  if (award.certificate) {
+    return { media: award.certificate, label: "证书原件", certificate: true };
+  }
+  if (award.cover) {
+    return { media: award.cover, label: "现场记录", certificate: false };
+  }
+  return { media: null, label: "奖项档案", certificate: false };
+}
+
+interface RailCardProps {
+  award: AwardPublic;
+}
+
+function RailCard({ award }: RailCardProps) {
+  const media = getRailMedia(award);
+
+  return (
+    <Link
+      href="/awards"
+      className="group glass-panel-strong flex h-full min-h-[28rem] flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-accent"
+    >
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden border-b border-hairline bg-white/34">
+        {media.media ? (
+          <MediaImage
+            media={media.media}
+            alt={`${award.title} ${media.label}`}
+            mode="cover"
+            className="h-full w-full"
+            sizes="(min-width: 1024px) 42vw, 88vw"
+            imgClassName={cn(
+              "transition-transform duration-700 group-hover:scale-[1.035]",
+              // MediaImage defaults to object-cover; keep the full certificate
+              // visible so portrait certificates are never cropped in the rail.
+              media.certificate ? "!object-contain bg-white/44 p-8" : "object-cover",
+            )}
+          />
+        ) : (
+          <div className="relative grid h-full place-items-center overflow-hidden px-8 text-center">
+            <span aria-hidden className="absolute -right-8 -bottom-16 h-48 w-48 rounded-full border border-accent/15" />
+            <span aria-hidden className="absolute -left-10 -top-20 h-48 w-48 rounded-full border border-signal/15" />
+            <div className="relative">
+              <p className="font-mono text-[10px] tracking-[0.3em] text-accent uppercase">NO IMAGE // ARCHIVE</p>
+              <p className="mt-3 font-display text-2xl font-semibold text-ink">{award.year}</p>
+              <p className="mt-2 text-sm text-ink-muted">影像资料整理中</p>
+            </div>
+          </div>
+        )}
+        <span className="absolute top-4 left-4 rounded-full border border-white/80 bg-white/72 px-3 py-1 font-mono text-[10px] tracking-[0.22em] text-ink-muted uppercase backdrop-blur-md">
+          {media.label}
+        </span>
+      </div>
+
+      <span className="flex flex-1 flex-col p-6 sm:p-7">
+        <span className="flex flex-wrap items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-ink-faint uppercase">
+          <span>{formatDate(award.award_date)}</span>
+          <span aria-hidden>·</span>
+          <LevelBadge level={award.level} />
+          <CategoryTag category={award.category} />
+        </span>
+        <span className="mt-4 block font-display text-2xl leading-tight font-semibold tracking-[-0.035em] text-ink sm:text-3xl">
+          {award.title}
+        </span>
+        <span className="mt-3 block text-sm leading-6 text-ink-muted">
+          {award.competition_name}
+        </span>
+        <span className="mt-auto flex items-center justify-between gap-4 pt-7 font-mono text-[10px] tracking-[0.2em] text-ink-faint uppercase">
+          <span>{award.issuer}</span>
+          <span aria-hidden className="text-accent transition-transform duration-300 group-hover:translate-x-1">↗</span>
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+/**
+ * Manual featured-award rail. Native horizontal overflow deliberately does
+ * the work for touch and trackpads; buttons and keyboard shortcuts provide a
+ * predictable desktop/focus path without any autoplay timer.
+ */
 export function FeaturedAwards({ awards }: FeaturedAwardsProps) {
+  const railRef = useRef<HTMLDivElement>(null);
+  const [controls, setControls] = useState({ previous: false, next: false });
+
+  const updateControls = useCallback(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const max = rail.scrollWidth - rail.clientWidth;
+    const nextControls = {
+      previous: rail.scrollLeft > 8,
+      next: max > 8 && rail.scrollLeft < max - 8,
+    };
+    setControls((current) =>
+      current.previous === nextControls.previous && current.next === nextControls.next
+        ? current
+        : nextControls,
+    );
+  }, []);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        updateControls();
+      });
+    };
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    observer?.observe(rail);
+    rail.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule, { passive: true });
+    schedule();
+    return () => {
+      observer?.disconnect();
+      rail.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [updateControls]);
+
+  const moveRail = useCallback(
+    (direction: -1 | 1) => {
+      const rail = railRef.current;
+      if (!rail) return;
+      const amount = Math.max(rail.clientWidth * 0.78, 280);
+      rail.scrollBy({
+        left: amount * direction,
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+      });
+    },
+    [],
+  );
+
+  const onRailKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      moveRail(-1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      moveRail(1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      railRef.current?.scrollTo({ left: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    } else if (event.key === "End") {
+      event.preventDefault();
+      const rail = railRef.current;
+      if (rail) {
+        rail.scrollTo({ left: rail.scrollWidth, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+      }
+    }
+  };
+
   return (
     <section className="section-pad border-t border-hairline">
-      <Container>
-        <Reveal>
-          <SectionHeader index="04" code="HONORS" title="精选荣誉" />
-        </Reveal>
+      <Container width="wide">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <Reveal>
+            <SectionHeader
+              index="04"
+              code="HONORS"
+              title="精选荣誉"
+              description="沿着横向档案浏览国家级与省级重要奖项。手动滑动或使用方向键查看下一份记录。"
+            />
+          </Reveal>
+          <div className="flex shrink-0 items-center gap-2" aria-label="精选荣誉浏览控制">
+            <button
+              type="button"
+              aria-label="查看上一份精选荣誉"
+              aria-controls="featured-awards-rail"
+              disabled={!controls.previous}
+              onClick={() => moveRail(-1)}
+              className="glass-chip grid h-11 w-11 place-items-center p-0 text-lg text-ink transition-[background-color,border-color,opacity] hover:border-accent/50 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <span aria-hidden>←</span>
+            </button>
+            <button
+              type="button"
+              aria-label="查看下一份精选荣誉"
+              aria-controls="featured-awards-rail"
+              disabled={!controls.next}
+              onClick={() => moveRail(1)}
+              className="glass-chip grid h-11 w-11 place-items-center p-0 text-lg text-ink transition-[background-color,border-color,opacity] hover:border-accent/50 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <span aria-hidden>→</span>
+            </button>
+          </div>
+        </div>
 
         {awards.length > 0 ? (
-          <div className="mt-8 border-t border-hairline">
+          <div
+            id="featured-awards-rail"
+            ref={railRef}
+            tabIndex={0}
+            role="region"
+            aria-label="精选荣誉横向浏览"
+            onKeyDown={onRailKeyDown}
+            className="public-rail mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain pb-5 outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:gap-6"
+          >
             {awards.map((award, i) => (
-              <Reveal key={award.id} delay={i * 70}>
-                <Link
-                  href="/awards"
-                  className="group grid gap-3 border-b border-hairline py-5 transition-colors hover:bg-surface/60 sm:grid-cols-[90px_auto_minmax(0,1fr)_64px_auto] sm:items-center sm:gap-6 sm:px-2"
-                >
-                  <span className="font-mono text-sm text-ink-faint">{award.year}</span>
-                  <LevelBadge level={award.level} />
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">{award.title}</span>
-                    <span className="mt-0.5 block truncate text-xs text-ink-faint">
-                      {award.competition_name} · 颁发：{award.issuer}
-                    </span>
-                  </span>
-                  {award.certificate ?? award.cover ? (
-                    <MediaImage
-                      media={award.certificate ?? award.cover}
-                      alt={`${award.title} ${award.certificate ? "证书" : "现场"}`}
-                      mode="cover"
-                      className="h-16 w-16 border border-hairline"
-                      sizes="64px"
-                    />
-                  ) : (
-                    <span aria-hidden className="hidden h-16 w-16 sm:block" />
-                  )}
-                  <span
-                    aria-hidden
-                    className="hidden font-mono text-accent opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100 sm:block"
-                  >
-                    →
-                  </span>
-                </Link>
+              <Reveal
+                key={award.id}
+                delay={i * 70}
+                className="public-rail-item h-auto min-w-[min(88vw,32rem)] snap-start sm:min-w-[min(62vw,42rem)] lg:min-w-[min(48vw,44rem)]"
+              >
+                <RailCard award={award} />
               </Reveal>
             ))}
           </div>
@@ -69,9 +246,9 @@ export function FeaturedAwards({ awards }: FeaturedAwardsProps) {
         <Reveal delay={120}>
           <Link
             href="/awards"
-            className="mt-8 inline-flex items-center gap-2 font-mono text-xs tracking-[0.2em] text-accent uppercase transition-colors hover:text-accent-strong"
+            className="mt-6 inline-flex items-center gap-2 font-mono text-xs tracking-[0.2em] text-accent uppercase transition-colors hover:text-accent-strong"
           >
-            全部荣誉 <span aria-hidden>→</span>
+            查看完整荣誉档案 <span aria-hidden>→</span>
           </Link>
         </Reveal>
       </Container>

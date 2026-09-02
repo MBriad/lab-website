@@ -42,19 +42,19 @@ export function GalleryStrip({ items }: GalleryStripProps) {
                 <Link
                   href={item.href}
                   aria-label={`查看${item.source}：${item.title}`}
-                  className="group relative block overflow-hidden border border-hairline"
+                  className="glass-panel-strong group relative block overflow-hidden transition-[border-color,box-shadow] duration-500 hover:border-accent/40 hover:shadow-glow-accent"
                 >
                   <MediaImage
                     media={item.media}
                     alt={item.title}
                     mode="cover"
-                    className="aspect-square w-full"
+                    className="aspect-square w-full bg-white/32"
                     sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
                     imgClassName="transition-transform duration-700 group-hover:scale-105"
                   />
                   <span
                     aria-hidden
-                    className="absolute inset-0 bg-linear-to-t from-background/85 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                    className="absolute inset-0 bg-linear-to-t from-white/92 via-white/15 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                   />
                   <span className="absolute inset-x-3 bottom-3 translate-y-2 font-mono text-[10px] tracking-widest text-ink uppercase opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
                     {item.title}
