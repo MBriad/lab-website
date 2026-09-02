@@ -8,9 +8,13 @@
  *
  * The neighbor is patched first: a crash between the two calls leaves a
  * half-applied swap that still holds two distinct values and can be repaired
- * by clicking the control again. The backend orders public lists by
- * `sort_order ASC, id ASC`, so swapping concrete neighbor values always
- * produces a deterministic visible change even when many rows share `0`.
+ * by clicking the control again.
+ *
+ * Visibility of a swap follows the backend ordering keys (`app/api`):
+ * projects and research areas order by `sort_order ASC, id ASC`, so a swap
+ * always moves the rows. News orders by `published_at DESC, sort_order ASC`
+ * and awards by `award_date DESC, sort_order ASC`, so there a swap changes
+ * the visible order only between rows whose date key is equal.
  */
 
 /** The subset of a contract row the swap needs. */
