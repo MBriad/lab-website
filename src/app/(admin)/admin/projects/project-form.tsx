@@ -30,12 +30,14 @@ import type {
 const TITLE_MAX = 255;
 const SLUG_MAX = 160;
 const SUMMARY_MAX = 10000;
+const DEMO_URL_MAX = 500;
 
 interface FormState {
   title: string;
   slug: string;
   summary: string;
   description: string;
+  demo_url: string;
   cover: MediaPublic | null;
   sort_order: string;
   is_visible: boolean;
@@ -56,6 +58,7 @@ export function ProjectForm({ projectId }: ProjectFormProps) {
     slug: "",
     summary: "",
     description: "",
+    demo_url: "",
     cover: null,
     sort_order: "0",
     is_visible: false,
@@ -78,6 +81,7 @@ export function ProjectForm({ projectId }: ProjectFormProps) {
           slug: project.slug,
           summary: project.summary ?? "",
           description: project.description,
+          demo_url: project.demo_url ?? "",
           cover: project.cover,
           sort_order: String(project.sort_order),
           is_visible: project.is_visible,
@@ -124,6 +128,8 @@ export function ProjectForm({ projectId }: ProjectFormProps) {
     if (!form.description.trim()) errors.description = "请输入项目介绍。";
     if (form.summary.length > SUMMARY_MAX)
       errors.summary = `简介不能超过 ${SUMMARY_MAX} 个字符。`;
+    if (form.demo_url && !/^https?:\/\//i.test(form.demo_url)) errors.demo_url = "请输入以 http:// 或 https:// 开头的链接。";
+    else if (form.demo_url.length > DEMO_URL_MAX) errors.demo_url = `演示链接不能超过 ${DEMO_URL_MAX} 个字符。`;
     const order = Number(form.sort_order);
     if (!Number.isInteger(order) || order < 0)
       errors.sort_order = "排序需为不小于 0 的整数。";
@@ -146,6 +152,7 @@ export function ProjectForm({ projectId }: ProjectFormProps) {
           slug: form.slug,
           summary,
           description: form.description,
+          demo_url: emptyToNull(form.demo_url),
           cover_media_id: form.cover ? form.cover.id : null,
           sort_order: sortOrder,
           is_visible: form.is_visible,
@@ -158,6 +165,7 @@ export function ProjectForm({ projectId }: ProjectFormProps) {
           slug: form.slug,
           summary,
           description: form.description,
+          demo_url: emptyToNull(form.demo_url),
           cover_media_id: form.cover ? form.cover.id : null,
           sort_order: sortOrder,
           is_visible: form.is_visible,
@@ -285,6 +293,9 @@ export function ProjectForm({ projectId }: ProjectFormProps) {
               invalid={Boolean(fieldErrors.description)}
             />
           </Field>
+          <Field label="演示链接" htmlFor="project-demo-url" error={fieldErrors.demo_url} hint="可选；仅支持 http:// 或 https://，留空可清除。">
+            <Input id="project-demo-url" type="url" value={form.demo_url} onChange={(e) => setField("demo_url", e.target.value)} placeholder="https://" invalid={Boolean(fieldErrors.demo_url)} />
+          </Field>
         </AdminCard>
 
         <AdminCard className="space-y-4">
@@ -329,4 +340,9 @@ export function ProjectForm({ projectId }: ProjectFormProps) {
       </form>
     </div>
   );
+}
+
+function emptyToNull(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
 }

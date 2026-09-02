@@ -122,6 +122,17 @@ export interface SiteSettingsPublic {
   address: string | null;
   hero_title: string | null;
   hero_subtitle: string | null;
+  lab_positioning: string | null;
+  founded_year: number | null;
+  founding_background: string | null;
+  core_platforms: string[];
+  paper_count: number;
+  patent_count: number;
+  active_project_count: number;
+  trained_student_count: number;
+  papers_url: string | null;
+  join_url: string | null;
+  cooperation_url: string | null;
   logo: MediaPublic | null;
   social_github: string | null;
   social_bilibili: string | null;
@@ -146,6 +157,17 @@ export interface SiteSettingsUpdate {
   address?: string | null;
   hero_title?: string | null;
   hero_subtitle?: string | null;
+  lab_positioning?: string | null;
+  founded_year?: number | null;
+  founding_background?: string | null;
+  core_platforms?: string[];
+  paper_count?: number;
+  patent_count?: number;
+  active_project_count?: number;
+  trained_student_count?: number;
+  papers_url?: string | null;
+  join_url?: string | null;
+  cooperation_url?: string | null;
   logo_media_id?: string | null;
   social_github?: string | null;
   social_bilibili?: string | null;
@@ -156,17 +178,30 @@ export interface SiteSettingsUpdate {
 /* Research areas                                                      */
 /* ------------------------------------------------------------------ */
 
+export interface ProjectReferencePublic {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  cover: MediaPublic | null;
+  demo_url: string | null;
+}
+
 export interface ResearchAreaPublic {
   id: string;
   slug: string;
   title: string;
   description: string;
+  problem_statement: string | null;
+  application_scenarios: string[];
+  representative_project: ProjectReferencePublic | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
 }
 
 export interface ResearchAreaAdmin extends ResearchAreaPublic {
+  representative_project_id: string | null;
   is_visible: boolean;
 }
 
@@ -174,6 +209,9 @@ export interface ResearchAreaCreate {
   slug: string;
   title: string;
   description: string;
+  problem_statement?: string | null;
+  application_scenarios?: string[];
+  representative_project_id?: string | null;
   sort_order?: number;
   is_visible?: boolean;
 }
@@ -183,6 +221,9 @@ export interface ResearchAreaUpdate {
   slug?: string | null;
   title?: string | null;
   description?: string | null;
+  problem_statement?: string | null;
+  application_scenarios?: string[];
+  representative_project_id?: string | null;
   sort_order?: number | null;
   is_visible?: boolean | null;
 }
@@ -242,6 +283,7 @@ export interface ProjectPublic {
   title: string;
   summary: string | null;
   description: string;
+  demo_url: string | null;
   cover: MediaPublic | null;
   sort_order: number;
   published_at: string | null;
@@ -258,6 +300,7 @@ export interface ProjectCreate {
   slug: string;
   title: string;
   description: string;
+  demo_url?: string | null;
   summary?: string | null;
   cover_media_id?: string | null;
   published_at?: string | null;
@@ -271,6 +314,7 @@ export interface ProjectUpdate {
   title?: string | null;
   summary?: string | null;
   description?: string | null;
+  demo_url?: string | null;
   cover_media_id?: string | null;
   published_at?: string | null;
   sort_order?: number | null;

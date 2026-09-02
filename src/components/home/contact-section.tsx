@@ -1,5 +1,6 @@
 import { Reveal } from "@/components/motion/reveal";
 import { Container } from "@/components/ui/container";
+import { HudLink } from "@/components/ui/hud-link";
 import { SectionHeader } from "@/components/ui/section-header";
 import type { SiteSettingsPublic } from "@/lib/types/api";
 
@@ -14,17 +15,25 @@ interface Channel {
   external?: boolean;
 }
 
+interface Action {
+  label: string;
+  href: string;
+  variant: "primary" | "ghost";
+  external?: boolean;
+}
+
 /** SEC.07 — contact channels from settings + editorial join invitation. */
 export function ContactSection({ settings }: ContactSectionProps) {
+  const contactEmail = settings.contact_email ?? settings.social_email;
   const channels: Channel[] = [];
   if (settings.address) {
     channels.push({ label: "地址", value: settings.address });
   }
-  if (settings.contact_email) {
+  if (contactEmail) {
     channels.push({
       label: "邮箱",
-      value: settings.contact_email,
-      href: `mailto:${settings.contact_email}`,
+      value: contactEmail,
+      href: `mailto:${contactEmail}`,
     });
   }
   if (settings.contact_phone) {
@@ -51,6 +60,33 @@ export function ContactSection({ settings }: ContactSectionProps) {
     });
   }
 
+  const actions: Action[] = [
+    { label: "浏览项目", href: "/projects", variant: "primary" },
+    { label: "查看研究方向", href: "/research", variant: "ghost" },
+  ];
+  if (settings.join_url || contactEmail) {
+    actions.push({
+      label: "加入实验室",
+      href: settings.join_url ?? `mailto:${contactEmail}?subject=${encodeURIComponent("加入实验室咨询")}`,
+      variant: "ghost",
+      external: Boolean(settings.join_url),
+    });
+  }
+  if (settings.papers_url) {
+    actions.push({ label: "查看论文", href: settings.papers_url, variant: "ghost", external: true });
+  }
+  if (contactEmail) {
+    actions.push({ label: "联系实验室", href: `mailto:${contactEmail}`, variant: "ghost" });
+    actions.push({
+      label: "科研合作",
+      href: settings.cooperation_url ?? `mailto:${contactEmail}?subject=${encodeURIComponent("科研与产业合作咨询")}`,
+      variant: "ghost",
+      external: Boolean(settings.cooperation_url),
+    });
+  } else if (settings.cooperation_url) {
+    actions.push({ label: "科研合作", href: settings.cooperation_url, variant: "ghost", external: true });
+  }
+
   return (
     <section id="contact" className="section-pad border-t border-hairline">
       <Container>
@@ -75,6 +111,15 @@ export function ContactSection({ settings }: ContactSectionProps) {
                 <li>OPEN // 学科竞赛 · 毕业设计</li>
                 <li>OPEN // 访问交流 · 联合培养</li>
               </ul>
+            </Reveal>
+            <Reveal delay={240}>
+              <nav aria-label="实验室行动入口" className="mt-8 flex flex-wrap gap-3">
+                {actions.map((action) => (
+                    <HudLink key={action.label} href={action.href} variant={action.variant} external={action.external}>
+                    {action.label}
+                  </HudLink>
+                ))}
+              </nav>
             </Reveal>
           </div>
 

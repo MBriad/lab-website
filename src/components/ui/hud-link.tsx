@@ -10,6 +10,8 @@ export interface HudLinkProps {
   children: ReactNode;
   /** Hide the trailing arrow (e.g. for hash anchors). */
   withArrow?: boolean;
+  /** Render configured external destinations with an explicit safe target. */
+  external?: boolean;
 }
 
 /**
@@ -22,27 +24,31 @@ export function HudLink({
   className,
   children,
   withArrow = true,
+  external = false,
 }: HudLinkProps) {
   const styles =
     variant === "primary"
       ? "border border-accent/60 bg-accent/10 text-accent hover:bg-accent/20 hover:text-accent-strong hover:shadow-glow-accent"
       : "border border-hairline-strong text-ink-muted hover:border-accent/50 hover:text-ink";
 
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group/hud inline-flex items-center gap-2 rounded-hud px-5 py-2.5 font-mono text-xs tracking-[0.2em] uppercase transition-[background-color,border-color,color,box-shadow] duration-300",
-        styles,
-        className,
-      )}
-    >
+  const classNameValue = cn(
+    "group/hud inline-flex items-center gap-2 rounded-hud px-5 py-2.5 font-mono text-xs tracking-[0.2em] uppercase transition-[background-color,border-color,color,box-shadow] duration-300",
+    styles,
+    className,
+  );
+  const content = (
+    <>
       {children}
       {withArrow ? (
         <span aria-hidden className="transition-transform duration-300 group-hover/hud:translate-x-1">
           →
         </span>
       ) : null}
-    </Link>
+    </>
+  );
+  return external ? (
+    <a href={href} target="_blank" rel="noreferrer noopener" className={classNameValue}>{content}</a>
+  ) : (
+    <Link href={href} className={classNameValue}>{content}</Link>
   );
 }

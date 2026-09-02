@@ -25,6 +25,7 @@ import type {
   ProjectAdmin,
   ProjectCreate,
   ProjectPublic,
+  ProjectReferencePublic,
   ProjectUpdate,
   ResearchAreaAdmin,
   ResearchAreaCreate,
@@ -189,6 +190,7 @@ export function createMockApiClient(): ApiClient {
       title: item.title,
       summary: item.summary,
       description: item.description,
+      demo_url: item.demo_url,
       cover: item.cover,
       sort_order: item.sort_order,
       published_at: item.published_at,
@@ -197,16 +199,52 @@ export function createMockApiClient(): ApiClient {
     };
   }
 
+  function toProjectReference(item: ProjectAdmin): ProjectReferencePublic {
+    return {
+      id: item.id,
+      slug: item.slug,
+      title: item.title,
+      summary: item.summary,
+      cover: item.cover,
+      demo_url: item.demo_url,
+    };
+  }
+
   function toResearchAreaPublic(item: ResearchAreaAdmin): ResearchAreaPublic {
+    const representative = item.representative_project_id
+      ? db.projects.find(
+          (project) =>
+            project.id === item.representative_project_id &&
+            project.is_visible &&
+            project.published_at !== null,
+        )
+      : undefined;
     return {
       id: item.id,
       slug: item.slug,
       title: item.title,
       description: item.description,
+      problem_statement: item.problem_statement,
+      application_scenarios: item.application_scenarios,
+      representative_project: representative ? toProjectReference(representative) : null,
       sort_order: item.sort_order,
       created_at: item.created_at,
       updated_at: item.updated_at,
     };
+  }
+
+  function toResearchAreaAdmin(item: ResearchAreaAdmin): ResearchAreaAdmin {
+    const representative = item.representative_project_id
+      ? db.projects.find((project) => project.id === item.representative_project_id)
+      : undefined;
+    return {
+      ...item,
+      representative_project: representative ? toProjectReference(representative) : null,
+    };
+  }
+
+  function syncResearchReference(item: ResearchAreaAdmin): void {
+    item.representative_project = toResearchAreaAdmin(item).representative_project;
   }
 
   function toAwardPublic(item: AwardAdmin): AwardPublic {
@@ -243,6 +281,17 @@ export function createMockApiClient(): ApiClient {
       address: item.address,
       hero_title: item.hero_title,
       hero_subtitle: item.hero_subtitle,
+      lab_positioning: item.lab_positioning,
+      founded_year: item.founded_year,
+      founding_background: item.founding_background,
+      core_platforms: item.core_platforms,
+      paper_count: item.paper_count,
+      patent_count: item.patent_count,
+      active_project_count: item.active_project_count,
+      trained_student_count: item.trained_student_count,
+      papers_url: item.papers_url,
+      join_url: item.join_url,
+      cooperation_url: item.cooperation_url,
       logo: item.logo,
       social_github: item.social_github,
       social_bilibili: item.social_bilibili,
@@ -403,19 +452,20 @@ export function createMockApiClient(): ApiClient {
 
     listAdminResearchAreas: async (params = {}) => {
       requireAuth();
-      return paginate(
+      const page = paginate(
         [...db.researchAreas].sort((a, b) => a.sort_order - b.sort_order),
         params.page,
         params.page_size,
         50,
       );
+      return { ...page, items: page.items.map(toResearchAreaAdmin) };
     },
 
     getAdminResearchArea: async (areaId) => {
       requireAuth();
       const found = db.researchAreas.find((a) => a.id === areaId);
       if (!found) throw notFound("研究方向", areaId);
-      return clone(found);
+      return clone(toResearchAreaAdmin(found));
     },
 
     createResearchArea: async (input: ResearchAreaCreate) => {
@@ -429,11 +479,16 @@ export function createMockApiClient(): ApiClient {
         slug: input.slug,
         title: input.title,
         description: input.description,
+        problem_statement: input.problem_statement ?? null,
+        application_scenarios: input.application_scenarios ?? [],
+        representative_project_id: input.representative_project_id ?? null,
+        representative_project: null,
         sort_order: input.sort_order ?? 0,
         is_visible: input.is_visible ?? false,
         created_at: now,
         updated_at: now,
       };
+      syncResearchReference(created);
       db.researchAreas.push(created);
       return clone(created);
     },
@@ -447,6 +502,7 @@ export function createMockApiClient(): ApiClient {
       }
       applyDefined(found, patch);
       found.updated_at = nowIso();
+      syncResearchReference(found);
       return clone(found);
     },
 
@@ -571,6 +627,7 @@ export function createMockApiClient(): ApiClient {
         title: input.title,
         summary: input.summary ?? null,
         description: input.description,
+        demo_url: input.demo_url ?? null,
         cover_media_id: input.cover_media_id ?? null,
         cover: input.cover_media_id
           ? toPublicMedia(requireMedia(input.cover_media_id))

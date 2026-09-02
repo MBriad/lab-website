@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Reveal } from "@/components/motion/reveal";
-import { prefersReducedMotion } from "@/components/motion/motion-prefs";
+import { useHorizontalRail } from "@/components/motion/use-horizontal-rail";
 import { CategoryTag, LevelBadge } from "@/components/ui/badges";
 import { Container } from "@/components/ui/container";
 import { MediaImage } from "@/components/ui/media-image";
@@ -105,79 +104,7 @@ function RailCard({ award }: RailCardProps) {
  * predictable desktop/focus path without any autoplay timer.
  */
 export function FeaturedAwards({ awards }: FeaturedAwardsProps) {
-  const railRef = useRef<HTMLDivElement>(null);
-  const [controls, setControls] = useState({ previous: false, next: false });
-
-  const updateControls = useCallback(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    const max = rail.scrollWidth - rail.clientWidth;
-    const nextControls = {
-      previous: rail.scrollLeft > 8,
-      next: max > 8 && rail.scrollLeft < max - 8,
-    };
-    setControls((current) =>
-      current.previous === nextControls.previous && current.next === nextControls.next
-        ? current
-        : nextControls,
-    );
-  }, []);
-
-  useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    let frame = 0;
-    const schedule = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        updateControls();
-      });
-    };
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
-    observer?.observe(rail);
-    rail.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule, { passive: true });
-    schedule();
-    return () => {
-      observer?.disconnect();
-      rail.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, [updateControls]);
-
-  const moveRail = useCallback(
-    (direction: -1 | 1) => {
-      const rail = railRef.current;
-      if (!rail) return;
-      const amount = Math.max(rail.clientWidth * 0.78, 280);
-      rail.scrollBy({
-        left: amount * direction,
-        behavior: prefersReducedMotion() ? "auto" : "smooth",
-      });
-    },
-    [],
-  );
-
-  const onRailKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      moveRail(-1);
-    } else if (event.key === "ArrowRight") {
-      event.preventDefault();
-      moveRail(1);
-    } else if (event.key === "Home") {
-      event.preventDefault();
-      railRef.current?.scrollTo({ left: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
-    } else if (event.key === "End") {
-      event.preventDefault();
-      const rail = railRef.current;
-      if (rail) {
-        rail.scrollTo({ left: rail.scrollWidth, behavior: prefersReducedMotion() ? "auto" : "smooth" });
-      }
-    }
-  };
+  const { railRef, controls, moveRail, onRailKeyDown } = useHorizontalRail();
 
   return (
     <section className="section-pad border-t border-hairline">
@@ -191,7 +118,7 @@ export function FeaturedAwards({ awards }: FeaturedAwardsProps) {
               description="沿着横向档案浏览国家级与省级重要奖项。手动滑动或使用方向键查看下一份记录。"
             />
           </Reveal>
-          <div className="flex shrink-0 items-center gap-2" aria-label="精选荣誉浏览控制">
+          {awards.length > 1 ? <div className="flex shrink-0 items-center gap-2" aria-label="精选荣誉浏览控制">
             <button
               type="button"
               aria-label="查看上一份精选荣誉"
@@ -212,7 +139,7 @@ export function FeaturedAwards({ awards }: FeaturedAwardsProps) {
             >
               <span aria-hidden>→</span>
             </button>
-          </div>
+          </div> : null}
         </div>
 
         {awards.length > 0 ? (

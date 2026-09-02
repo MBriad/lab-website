@@ -1,7 +1,6 @@
-"use client";
-
 import { DeviceOrientationControl } from "@/components/motion/device-orientation-control";
 import { MagneticButton } from "@/components/motion/magnetic-button";
+import { Starfield } from "@/components/motion/starfield";
 import { TiltCard } from "@/components/motion/tilt-card";
 import { Container } from "@/components/ui/container";
 import { HudLink } from "@/components/ui/hud-link";
@@ -35,6 +34,7 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
       data-motion-probe="hero"
       className="public-hero relative flex min-h-svh items-center overflow-hidden pt-20"
     >
+      <Starfield className="z-0 opacity-35" />
       <div aria-hidden className="public-hero-grid" />
       <div aria-hidden className="public-motion-layer public-hero-orbit absolute top-[21%] left-[9%] h-28 w-56 opacity-70 sm:h-40 sm:w-80" />
       <div aria-hidden className="public-motion-layer public-hero-orbit absolute right-[6%] bottom-[17%] h-24 w-44 opacity-50 sm:h-36 sm:w-64" />
@@ -42,12 +42,23 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
       <div aria-hidden className="absolute bottom-[29%] left-[16%] h-1.5 w-1.5 rounded-full bg-signal/70" />
 
       <Container width="wide" className="relative z-10 flex w-full flex-col items-center py-14 text-center sm:py-16 lg:py-20">
-        <p
-          className="font-mono text-[10px] tracking-[0.38em] text-accent uppercase animate-fade-up sm:text-xs"
+        <div
+          className="flex items-center gap-3 font-mono text-[10px] tracking-[0.38em] text-accent uppercase animate-fade-up sm:text-xs"
           style={{ animationDelay: "0.05s" }}
         >
-          {`ROBOTICS LAB // ${settings.lab_name}`}
-        </p>
+          {settings.logo ? (
+            <MediaImage
+              media={settings.logo}
+              alt={`${settings.lab_name} 标志`}
+              mode="cover"
+              className="h-10 w-10 shrink-0 rounded-full border border-white/75 bg-white/65 p-1 shadow-glow-accent"
+              sizes="40px"
+              priority
+              imgClassName="object-contain"
+            />
+          ) : null}
+          <span>{`ROBOTICS LAB // ${settings.lab_name}`}</span>
+        </div>
 
         <h1
           className="mt-5 max-w-5xl font-display text-[clamp(3rem,6.5vw,6.5rem)] leading-[0.98] font-semibold tracking-[-0.06em] text-ink animate-fade-up sm:mt-9"
@@ -59,22 +70,31 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
           ) : null}
         </h1>
 
-        {settings.hero_subtitle ? (
+        {settings.tagline ? (
           <p
             className="mt-5 max-w-2xl text-base leading-7 text-ink-muted animate-fade-up sm:mt-6 sm:text-lg sm:leading-8"
             style={{ animationDelay: "0.25s" }}
           >
-            {settings.hero_subtitle}
+            {settings.tagline}
           </p>
         ) : null}
 
-        <p
-          className="mt-5 font-mono text-[10px] tracking-[0.3em] text-ink-faint uppercase animate-fade-up sm:mt-6"
-          style={{ animationDelay: "0.34s" }}
-        >
-          {settings.tagline ?? "ROBOTICS · INTELLIGENCE · EDUCATION"}
-          {est ? <> · EST.{est}</> : null}
-        </p>
+        {settings.hero_subtitle ? (
+          <p
+            className="mt-4 max-w-xl font-mono text-[10px] leading-5 tracking-[0.18em] text-ink-faint uppercase animate-fade-up sm:mt-5"
+            style={{ animationDelay: "0.34s" }}
+          >
+            {settings.hero_subtitle}
+            {est ? <> · EST.{est}</> : null}
+          </p>
+        ) : est ? (
+          <p
+            className="mt-5 font-mono text-[10px] tracking-[0.3em] text-ink-faint uppercase animate-fade-up sm:mt-6"
+            style={{ animationDelay: "0.34s" }}
+          >
+            EST.{est}
+          </p>
+        ) : null}
 
         <div
           className="mt-7 flex flex-wrap items-center justify-center gap-3 animate-fade-up sm:mt-10 sm:gap-4"
@@ -85,8 +105,8 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
               浏览科研项目
             </HudLink>
           </MagneticButton>
-          <MagneticButton strength={0.22}>
-            <HudLink href="#contact" variant="ghost" withArrow={false} className="glass-chip px-6 py-3 text-ink">
+           <MagneticButton strength={0.22}>
+             <HudLink href={settings.join_url ?? "#contact"} variant="ghost" withArrow={false} className="glass-chip px-6 py-3 text-ink" external={Boolean(settings.join_url)}>
               加入实验室
             </HudLink>
           </MagneticButton>

@@ -117,6 +117,24 @@ describe("request wiring", () => {
     });
   });
 
+  it("sends homepage extension fields without reshaping the contract payload", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () => jsonResponse(200, {}));
+    const api = createRealApiClient({ fetchImpl: fetchMock });
+    await api.updateSiteSettings({
+      lab_positioning: null,
+      core_platforms: ["动作捕捉系统"],
+      paper_count: 0,
+      join_url: null,
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe("http://127.0.0.1:8000/api/v1/admin/site-settings");
+    expect(fetchMock.mock.calls[0][1]?.body).toBe(JSON.stringify({
+      lab_positioning: null,
+      core_platforms: ["动作捕捉系统"],
+      paper_count: 0,
+      join_url: null,
+    }));
+  });
+
   it("network failures become ApiError status 0", async () => {
     const fetchMock = vi.fn<typeof fetch>(async () => {
       throw new TypeError("fetch failed");

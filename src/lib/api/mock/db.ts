@@ -134,6 +134,18 @@ export function createSeedDb(): MockDb {
     hero_title: "以机器人智能，构筑未来",
     hero_subtitle:
       "足式机器人 · 多智能体协同 · 具身感知 —— 持续拓展机器系统的工程边界",
+    lab_positioning: "面向真实场景的机器人智能研究与工程验证平台",
+    founded_year: 2018,
+    founding_background:
+      "实验室由机械与智能工程学院于 2018 年发起，连接基础研究、工程试验与本科生科研训练。",
+    core_platforms: ["动作捕捉系统", "整机测试场", "多智能体仿真平台"],
+    paper_count: 28,
+    patent_count: 11,
+    active_project_count: 8,
+    trained_student_count: 126,
+    papers_url: "https://example.com/xinghang/publications",
+    join_url: "https://example.com/xinghang/join",
+    cooperation_url: "https://example.com/xinghang/cooperation",
     logo: toPublicMedia(logo),
     logo_media_id: logo.id,
     social_github: "https://github.com/xinghang-robotics",
@@ -150,6 +162,10 @@ export function createSeedDb(): MockDb {
       title: "足式机器人",
       description:
         "面向非结构化地形的动态运动规划与全身控制，研究四足平台的感知-决策-控制闭环，探索高机动跳跃、攀爬与负载行走能力。",
+      problem_statement: "如何让足式机器人在未知地形中稳定感知、规划并完成动态运动？",
+      application_scenarios: ["校园与园区复杂地形巡检", "野外越障与应急搜救"],
+      representative_project_id: "44444444-0000-4000-8000-000000000001",
+      representative_project: null,
       sort_order: 1,
       created_at: "2024-09-05T08:00:00Z",
       updated_at: "2026-03-10T08:00:00Z",
@@ -161,6 +177,10 @@ export function createSeedDb(): MockDb {
       title: "多智能体系统",
       description:
         "分布式协同定位与建图、任务分配与编队控制，研究异构机器人群体在巡检、搜救等场景下的自组织协作机制。",
+      problem_statement: "如何在通信受限与节点失效时保持机器人群体的协同与任务连续性？",
+      application_scenarios: ["园区多机协同巡检", "灾害现场分布式搜救"],
+      representative_project_id: "44444444-0000-4000-8000-000000000002",
+      representative_project: null,
       sort_order: 2,
       created_at: "2024-09-05T08:00:00Z",
       updated_at: "2026-01-22T08:00:00Z",
@@ -172,6 +192,10 @@ export function createSeedDb(): MockDb {
       title: "具身感知与操作",
       description:
         "多模态感知融合与视触协同的灵巧操作，研究机械臂在开放环境下的抓取、装配与工具使用能力。",
+      problem_statement: "如何让机器人从视觉与触觉中形成可迁移的操作判断，并处理未见物体？",
+      application_scenarios: ["柔性物体抓取与装配", "开放环境中的工具使用"],
+      representative_project_id: "44444444-0000-4000-8000-000000000003",
+      representative_project: null,
       sort_order: 3,
       created_at: "2024-09-05T08:00:00Z",
       updated_at: "2025-11-30T08:00:00Z",
@@ -183,6 +207,10 @@ export function createSeedDb(): MockDb {
       title: "人机交互",
       description:
         "意图识别、安全合规控制与人机协同装配，研究人与机器人在共享工作空间中的自然协作与信任建立。",
+      problem_statement: "如何在共享工作空间中兼顾协作效率、安全边界与人的自然意图？",
+      application_scenarios: ["人机协同装配", "实验室与制造现场安全交互"],
+      representative_project_id: null,
+      representative_project: null,
       sort_order: 4,
       created_at: "2024-09-05T08:00:00Z",
       updated_at: "2025-10-18T08:00:00Z",
@@ -201,6 +229,7 @@ export function createSeedDb(): MockDb {
         "“玄鸟”是实验室自研的第三代四足机器人平台，整机重量 32kg，负载能力 8kg。\n\n平台采用自研关节驱动与分布式控制架构，支持草地、碎石、楼梯等复杂地形的稳定行走，并集成了激光雷达与视觉融合导航模块。2026 年 3 月完成校园 5 公里越野测试。\n\n相关代码与硬件设计正逐步在实验室开源仓库发布。",
       cover: toPublicMedia(legged),
       cover_media_id: legged.id,
+      demo_url: "https://example.com/xinghang/xuanniao-demo",
       sort_order: 1,
       published_at: "2026-03-12T02:00:00Z",
       created_at: "2025-04-02T08:00:00Z",
@@ -217,6 +246,7 @@ export function createSeedDb(): MockDb {
         "系统面向园区巡检场景，由 6 台异构地面机器人组成。\n\n通过分布式协同 SLAM 与基于拍卖的任务分配算法，系统可在部分节点失效时自动重组任务，巡检覆盖率保持在 95% 以上。\n\n2025 年获中国机器人大赛二等奖，并在两个合作园区开展试点运行。",
       cover: toPublicMedia(swarm),
       cover_media_id: swarm.id,
+      demo_url: "https://example.com/xinghang/swarm-demo",
       sort_order: 2,
       published_at: "2025-11-05T02:00:00Z",
       created_at: "2025-02-14T08:00:00Z",
@@ -233,6 +263,7 @@ export function createSeedDb(): MockDb {
         "“启明”平台由七自由度协作机械臂与自研三指灵巧手组成。\n\n通过视觉-触觉融合的抓取策略学习，平台在未见物体类别上的抓取成功率达到 87%。\n\n该平台同时支撑本科生毕业设计课题两项。",
       cover: toPublicMedia(arm),
       cover_media_id: arm.id,
+      demo_url: null,
       sort_order: 3,
       published_at: "2025-06-18T02:00:00Z",
       created_at: "2024-12-20T08:00:00Z",
@@ -249,6 +280,7 @@ export function createSeedDb(): MockDb {
         "巡检车采用轮式底盘与固态激光雷达，支持雨雪天气下的全天候运行。\n\n系统接入校园物联网平台，可自动上报路灯故障、积水等异常事件，已在校园西区累计运行超过 800 小时。",
       cover: toPublicMedia(rover),
       cover_media_id: rover.id,
+      demo_url: null,
       sort_order: 4,
       published_at: "2024-12-02T02:00:00Z",
       created_at: "2024-10-08T08:00:00Z",
@@ -265,6 +297,7 @@ export function createSeedDb(): MockDb {
         "实验台由协作机械臂、深度相机与力觉传感工作台组成，用于研究共享工作空间中的安全交互与协同装配。\n\n页面内容整理中，暂不对外发布。",
       cover: toPublicMedia(bench),
       cover_media_id: bench.id,
+      demo_url: null,
       sort_order: 5,
       published_at: null,
       created_at: "2025-08-25T08:00:00Z",
@@ -281,6 +314,7 @@ export function createSeedDb(): MockDb {
         "自研柔性触觉传感阵列空间分辨率 1.2mm，支持法向力与剪切力同步测量，已集成于“启明”灵巧手指端。\n\n论文撰写中，项目页面暂不对外发布。",
       cover: toPublicMedia(tactile),
       cover_media_id: tactile.id,
+      demo_url: null,
       sort_order: 6,
       published_at: null,
       created_at: "2025-10-11T08:00:00Z",
@@ -288,6 +322,23 @@ export function createSeedDb(): MockDb {
       is_visible: false,
     },
   ];
+
+  const projectById = new Map(projects.map((project) => [project.id, project]));
+  for (const area of researchAreas) {
+    const project = area.representative_project_id
+      ? projectById.get(area.representative_project_id)
+      : undefined;
+    area.representative_project = project
+      ? {
+          id: project.id,
+          slug: project.slug,
+          title: project.title,
+          summary: project.summary,
+          cover: project.cover,
+          demo_url: project.demo_url,
+        }
+      : null;
+  }
 
   const awards: AwardAdmin[] = [
     {

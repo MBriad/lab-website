@@ -21,6 +21,7 @@ import { redirectToLogin } from "@/components/admin/lib/auth";
 import type {
   ResearchAreaCreate,
   ResearchAreaUpdate,
+  ProjectAdmin,
 } from "@/lib/types/api";
 
 const TITLE_MAX = 255;
@@ -30,6 +31,9 @@ interface FormState {
   title: string;
   slug: string;
   description: string;
+  problem_statement: string;
+  application_scenarios: string;
+  representative_project_id: string;
   sort_order: string;
   is_visible: boolean;
 }
@@ -48,6 +52,9 @@ export function ResearchForm({ areaId }: ResearchFormProps) {
     title: "",
     slug: "",
     description: "",
+    problem_statement: "",
+    application_scenarios: "",
+    representative_project_id: "",
     sort_order: "0",
     is_visible: false,
   });
@@ -55,6 +62,7 @@ export function ResearchForm({ areaId }: ResearchFormProps) {
   const [loading, setLoading] = useState(isEdit);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [projects, setProjects] = useState<ProjectAdmin[]>([]);
 
   useEffect(() => {
     if (!areaId) return;
@@ -67,6 +75,9 @@ export function ResearchForm({ areaId }: ResearchFormProps) {
           title: area.title,
           slug: area.slug,
           description: area.description,
+          problem_statement: area.problem_statement ?? "",
+          application_scenarios: area.application_scenarios.join("\n"),
+          representative_project_id: area.representative_project_id ?? "",
           sort_order: String(area.sort_order),
           is_visible: area.is_visible,
         });
@@ -90,6 +101,16 @@ export function ResearchForm({ areaId }: ResearchFormProps) {
     };
   }, [areaId, router]);
 
+  useEffect(() => {
+    let cancelled = false;
+    api.listAdminProjects({ page: 1, page_size: 50 }).then((page) => {
+      if (!cancelled) setProjects(page.items);
+    }).catch((err) => {
+      if (!cancelled && isAuthError(err)) redirectToLogin(router);
+    });
+    return () => { cancelled = true; };
+  }, [router]);
+
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -105,6 +126,8 @@ export function ResearchForm({ areaId }: ResearchFormProps) {
     else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(form.slug.trim()))
       errors.slug = "slug 仅支持字母、数字与连字符（-）。";
     if (!form.description.trim()) errors.description = "请输入描述。";
+    const scenarios = form.application_scenarios.split("\n").map((item) => item.trim()).filter(Boolean);
+    if (scenarios.length > 6 || scenarios.some((item) => item.length > 160)) errors.application_scenarios = "最多填写 6 个场景，每项不超过 160 个字符。";
     const order = Number(form.sort_order);
     if (!Number.isInteger(order) || order < 0)
       errors.sort_order = "排序需为不小于 0 的整数。";
@@ -125,6 +148,9 @@ export function ResearchForm({ areaId }: ResearchFormProps) {
           title: form.title,
           slug: form.slug,
           description: form.description,
+          problem_statement: emptyToNull(form.problem_statement),
+          application_scenarios: form.application_scenarios.split("\n").map((item) => item.trim()).filter(Boolean),
+          representative_project_id: form.representative_project_id || null,
           sort_order: sortOrder,
           is_visible: form.is_visible,
         };
@@ -135,6 +161,9 @@ export function ResearchForm({ areaId }: ResearchFormProps) {
           title: form.title,
           slug: form.slug,
           description: form.description,
+          problem_statement: emptyToNull(form.problem_statement),
+          application_scenarios: form.application_scenarios.split("\n").map((item) => item.trim()).filter(Boolean),
+          representative_project_id: form.representative_project_id || null,
           sort_order: sortOrder,
           is_visible: form.is_visible,
         };
@@ -236,6 +265,18 @@ export function ResearchForm({ areaId }: ResearchFormProps) {
               invalid={Boolean(fieldErrors.description)}
             />
           </Field>
+          <Field label="问题陈述" htmlFor="research-problem" error={fieldErrors.problem_statement} hint="留空时前台使用描述作为问题说明。">
+            <Textarea id="research-problem" rows={3} value={form.problem_statement} onChange={(e) => setField("problem_statement", e.target.value)} invalid={Boolean(fieldErrors.problem_statement)} />
+          </Field>
+          <Field label="应用场景（每行一项）" htmlFor="research-scenarios" error={fieldErrors.application_scenarios} hint="最多 6 项，每项不超过 160 个字符。">
+            <Textarea id="research-scenarios" rows={4} value={form.application_scenarios} onChange={(e) => setField("application_scenarios", e.target.value)} invalid={Boolean(fieldErrors.application_scenarios)} />
+          </Field>
+          <Field label="代表项目" htmlFor="research-representative-project" error={fieldErrors.representative_project_id} hint="可清除；仅从项目 API 中选择。">
+            <select id="research-representative-project" value={form.representative_project_id} onChange={(e) => setField("representative_project_id", e.target.value)} className="h-10 w-full rounded-md border border-hairline-strong bg-transparent px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              <option value="">不设置代表项目</option>
+              {projects.map((project) => <option key={project.id} value={project.id}>{project.title}</option>)}
+            </select>
+          </Field>
           <Field
             label="排序"
             htmlFor="research-sort"
@@ -271,4 +312,9 @@ export function ResearchForm({ areaId }: ResearchFormProps) {
       </form>
     </div>
   );
+}
+
+function emptyToNull(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
 }

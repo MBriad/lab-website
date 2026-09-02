@@ -177,6 +177,82 @@ describe("site settings PATCH semantics", () => {
     expect(patched.hero_title).toBe("新标题");
     expect(patched.lab_name).toBe(before.lab_name);
   });
+
+  it("projects official settings fields and preserves null clears", async () => {
+    const api = makeClient();
+    const before = await api.getSiteSettings();
+    expect(before.paper_count).toBeGreaterThan(0);
+    expect(before.core_platforms.length).toBeGreaterThan(0);
+
+    await api.login({ username: "admin", password: "admin123" });
+    await api.updateSiteSettings({
+      lab_positioning: "新的定位",
+      founded_year: null,
+      core_platforms: ["新平台"],
+      paper_count: 0,
+      join_url: null,
+    });
+    const after = await api.getSiteSettings();
+    expect(after.lab_positioning).toBe("新的定位");
+    expect(after.founded_year).toBeNull();
+    expect(after.core_platforms).toEqual(["新平台"]);
+    expect(after.paper_count).toBe(0);
+    expect(after.join_url).toBeNull();
+  });
+});
+
+describe("homepage extension projections and round trips", () => {
+  it("includes public research stories and only published representative projects", async () => {
+    const api = makeClient();
+    const areas = await api.listResearchAreas({ page: 1, page_size: 50 });
+    expect(areas.items[0].problem_statement).toContain("足式机器人");
+    expect(areas.items[0].application_scenarios).toHaveLength(2);
+    expect(areas.items[0].representative_project?.demo_url).toContain("xuanniao");
+
+    await api.login({ username: "admin", password: "admin123" });
+    const created = await api.createResearchArea({
+      slug: "empty-story",
+      title: "空故事",
+      description: "保底描述",
+      problem_statement: null,
+      application_scenarios: [],
+      representative_project_id: "44444444-0000-4000-8000-000000000005",
+      is_visible: true,
+    });
+    expect(created.representative_project?.slug).toBe("hri-workbench");
+    const publicAreas = await api.listResearchAreas({ page: 1, page_size: 50 });
+    expect(publicAreas.items.find((area) => area.slug === "empty-story")?.representative_project).toBeNull();
+  });
+
+  it("keeps the admin representative-project projection in sync after updates", async () => {
+    const api = makeClient();
+    await api.login({ username: "admin", password: "admin123" });
+    const areaId = "22222222-0000-4000-8000-000000000004";
+
+    const saved = await api.updateResearchArea(areaId, {
+      representative_project_id: "44444444-0000-4000-8000-000000000001",
+    });
+    expect(saved.representative_project?.slug).toBe("xuanniao-legged-platform");
+
+    const reloaded = await api.getAdminResearchArea(areaId);
+    expect(reloaded.representative_project?.slug).toBe("xuanniao-legged-platform");
+
+    const cleared = await api.updateResearchArea(areaId, {
+      representative_project_id: null,
+    });
+    expect(cleared.representative_project).toBeNull();
+    expect((await api.getAdminResearchArea(areaId)).representative_project).toBeNull();
+  });
+
+  it("round-trips nullable project demo URLs", async () => {
+    const api = makeClient();
+    await api.login({ username: "admin", password: "admin123" });
+    const id = "44444444-0000-4000-8000-000000000003";
+    const saved = await api.updateProject(id, { demo_url: "https://example.com/demo" });
+    expect(saved.demo_url).toBe("https://example.com/demo");
+    const cleared = await api.updateProject(id, { demo_url: null });
+    expect(cleared.demo_url).toBeNull();
+  });
 });
 
 describe("publish flow", () => {

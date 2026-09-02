@@ -21,6 +21,8 @@ except ImportError as exc:  # pragma: no cover - environment guidance
 
 
 DESKTOP = {"width": 1536, "height": 1024}
+LAPTOP = {"width": 1280, "height": 900}
+TABLET = {"width": 768, "height": 1024}
 MOBILE = {"width": 390, "height": 844}
 
 
@@ -59,6 +61,18 @@ def page_metrics(page: Page, console_errors: list[str]) -> dict[str, Any]:
 def load_page(page: Page, url: str, timeout: int = 45_000) -> None:
     page.goto(url, wait_until="domcontentloaded", timeout=timeout)
     page.wait_for_timeout(900)
+
+
+def reveal_page(page: Page) -> None:
+    """Visit each viewport so scroll-reveal content is present in full-page evidence."""
+    viewport_height = page.evaluate("() => innerHeight")
+    page_height = page.evaluate("() => document.documentElement.scrollHeight")
+    step = max(240, int(viewport_height * 0.78))
+    for position in range(0, page_height + step, step):
+        page.evaluate("(y) => window.scrollTo(0, y)", position)
+        page.wait_for_timeout(120)
+    page.evaluate("() => window.scrollTo(0, 0)")
+    page.wait_for_timeout(250)
 
 
 def transform_snapshot(page: Page) -> dict[str, str | None]:
@@ -122,6 +136,7 @@ def run_desktop(browser: Browser, url: str, output: Path, failures: list[str]) -
     page.on("pageerror", lambda error: errors.append(f"pageerror: {error}"))
     try:
         load_page(page, url)
+        reveal_page(page)
         page.screenshot(path=str(output / "local-desktop.png"), full_page=True)
         before_pointer = transform_snapshot(page)
         page.mouse.move(1350, 300)
@@ -135,6 +150,8 @@ def run_desktop(browser: Browser, url: str, output: Path, failures: list[str]) -
         page.wait_for_timeout(350)
         after_scroll = transform_snapshot(page)
         metrics = page_metrics(page, errors)
+        if errors:
+            failures.append(f"desktop console/page errors: {errors}")
         if metrics["scrollWidth"] > metrics["clientWidth"] + 1:
             failures.append("desktop horizontal overflow")
         return {
@@ -149,6 +166,60 @@ def run_desktop(browser: Browser, url: str, output: Path, failures: list[str]) -
         context.close()
 
 
+def run_viewport(
+    browser: Browser,
+    url: str,
+    output: Path,
+    viewport: dict[str, int],
+    label: str,
+    failures: list[str],
+    *,
+    is_mobile: bool = False,
+) -> dict[str, Any]:
+    """Capture a responsive viewport and exercise both public rails."""
+    errors: list[str] = []
+    context = browser.new_context(
+        viewport=viewport,
+        is_mobile=is_mobile,
+        has_touch=is_mobile,
+    )
+    page = context.new_page()
+    page.on("console", lambda message: errors.append(message.text) if message.type == "error" else None)
+    page.on("pageerror", lambda error: errors.append(f"pageerror: {error}"))
+    try:
+        load_page(page, url)
+        reveal_page(page)
+        page.screenshot(path=str(output / f"local-{label}.png"), full_page=True)
+        metrics = page_metrics(page, errors)
+        if errors:
+            failures.append(f"{label} console/page errors: {errors}")
+        if metrics["scrollWidth"] > metrics["clientWidth"] + 1:
+            failures.append(f"{label} horizontal overflow")
+
+        rails: dict[str, dict[str, int | None]] = {}
+        for rail_id in ("featured-projects-rail", "featured-awards-rail"):
+            rail = page.locator(f"#{rail_id}")
+            if not rail.count():
+                continue
+            before = rail.evaluate("(element) => element.scrollLeft")
+            rail.focus()
+            page.keyboard.press("End")
+            page.wait_for_timeout(150)
+            after = rail.evaluate("(element) => element.scrollLeft")
+            scroll_width = rail.evaluate("(element) => element.scrollWidth")
+            client_width = rail.evaluate("(element) => element.clientWidth")
+            rails[rail_id] = {"before": before, "afterEndKey": after}
+            if scroll_width > client_width + 1 and after <= before:
+                failures.append(f"{label} {rail_id} End key did not advance rail")
+
+        return {"metrics": metrics, "rails": rails}
+    except Exception as exc:
+        failures.append(f"{label} navigation/check failed: {exc}")
+        return {"error": str(exc), "consoleErrors": errors}
+    finally:
+        context.close()
+
+
 def run_mobile(browser: Browser, url: str, output: Path, failures: list[str]) -> dict[str, Any]:
     errors: list[str] = []
     context = browser.new_context(viewport=MOBILE, is_mobile=True, has_touch=True)
@@ -157,20 +228,31 @@ def run_mobile(browser: Browser, url: str, output: Path, failures: list[str]) ->
     page.on("pageerror", lambda error: errors.append(f"pageerror: {error}"))
     try:
         load_page(page, url)
+        reveal_page(page)
         page.screenshot(path=str(output / "local-mobile.png"), full_page=True)
         metrics = page_metrics(page, errors)
+        if errors:
+            failures.append(f"mobile console/page errors: {errors}")
         if metrics["scrollWidth"] > metrics["clientWidth"] + 1:
             failures.append("mobile horizontal overflow")
-        rail = page.locator("#featured-awards-rail")
-        rail_before = rail.evaluate("(element) => element.scrollLeft") if rail.count() else None
-        if rail.count():
+        rail_results: dict[str, dict[str, int | None]] = {}
+        for rail_id in ("featured-projects-rail", "featured-awards-rail"):
+            rail = page.locator(f"#{rail_id}")
+            if not rail.count():
+                continue
+            rail_before = rail.evaluate("(element) => element.scrollLeft")
             rail.focus()
             page.keyboard.press("End")
             page.wait_for_timeout(150)
-        rail_after = rail.evaluate("(element) => element.scrollLeft") if rail.count() else None
+            rail_after = rail.evaluate("(element) => element.scrollLeft")
+            rail_scroll_width = rail.evaluate("(element) => element.scrollWidth")
+            rail_client_width = rail.evaluate("(element) => element.clientWidth")
+            rail_results[rail_id] = {"before": rail_before, "afterEndKey": rail_after}
+            if rail_scroll_width > rail_client_width + 1 and rail_after <= rail_before:
+                failures.append(f"mobile {rail_id} End key did not advance rail")
         return {
             "metrics": metrics,
-            "featuredAwardsRail": {"before": rail_before, "afterEndKey": rail_after},
+            "rails": rail_results,
             "orientationControlCount": page.get_by_role("button", name="启用动态玻璃").count(),
         }
     except Exception as exc:
@@ -231,13 +313,20 @@ def run_orientation(browser: Browser, url: str, output: Path) -> dict[str, Any]:
 def run_reduced(browser: Browser, url: str, output: Path, failures: list[str]) -> dict[str, Any]:
     context = browser.new_context(viewport=DESKTOP, reduced_motion="reduce")
     page = context.new_page()
+    errors: list[str] = []
+    page.on("console", lambda message: errors.append(message.text) if message.type == "error" else None)
+    page.on("pageerror", lambda error: errors.append(f"pageerror: {error}"))
     try:
         load_page(page, url)
+        reveal_page(page)
         page.screenshot(path=str(output / "local-reduced-motion.png"), full_page=True)
         snapshot = transform_snapshot(page)
+        metrics = page_metrics(page, errors)
+        if errors:
+            failures.append(f"reduced-motion console/page errors: {errors}")
         if snapshot["glassX"] not in {"", "0", "0.000"} or snapshot["glassY"] not in {"", "0", "0.000"}:
             failures.append("reduced-motion glass variables are not neutral")
-        return {"snapshot": snapshot, "metrics": page_metrics(page, [])}
+        return {"snapshot": snapshot, "metrics": metrics}
     except Exception as exc:
         failures.append(f"reduced-motion check failed: {exc}")
         return {"error": str(exc)}
@@ -264,6 +353,8 @@ def main() -> int:
             "localUrl": args.url,
             "reference": capture_reference(browser, args.reference_url, output),
             "desktop": run_desktop(browser, args.url, output, failures),
+            "laptop": run_viewport(browser, args.url, output, LAPTOP, "laptop", failures),
+            "tablet": run_viewport(browser, args.url, output, TABLET, "tablet", failures),
             "mobile": run_mobile(browser, args.url, output, failures),
             "orientation": run_orientation(browser, args.url, output),
             "reducedMotion": run_reduced(browser, args.url, output, failures),

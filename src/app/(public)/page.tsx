@@ -4,7 +4,7 @@ import { FeaturedAwards } from "@/components/home/featured-awards";
 import { FeaturedProjects } from "@/components/home/featured-projects";
 import { GalleryStrip } from "@/components/home/gallery-strip";
 import { Hero } from "@/components/home/hero";
-import { IntroSection } from "@/components/home/intro-section";
+import { LabAuthority } from "@/components/home/lab-authority";
 import { LatestNews } from "@/components/home/latest-news";
 import { ResearchPreview } from "@/components/home/research-preview";
 import { Container } from "@/components/ui/container";
@@ -71,32 +71,13 @@ export default async function HomePage() {
   ];
   const gallery = collectGallery(gallerySeeds, 8);
 
-  const stats = [
-    {
-      label: "研究方向",
-      value: String(home.researchAreas.length).padStart(2, "0"),
-    },
-    {
-      label: "精选项目",
-      value: String(home.featuredProjects.length).padStart(2, "0"),
-    },
-    {
-      label: "精选荣誉",
-      value: String(home.featuredAwards.length).padStart(2, "0"),
-    },
-    {
-      label: "最新动态",
-      value: String(home.latestNews.length).padStart(2, "0"),
-    },
-  ];
-
   return (
     <>
       <Hero
         settings={home.settings}
         heroMedia={home.featuredProjects[0]?.cover ?? null}
       />
-      <IntroSection description={home.settings.description} stats={stats} />
+      <LabAuthority settings={home.settings} />
       <ResearchPreview areas={home.researchAreas} />
       <FeaturedProjects projects={home.featuredProjects} />
       <FeaturedAwards awards={home.featuredAwards} />
