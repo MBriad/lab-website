@@ -7,7 +7,7 @@ export interface FooterProps {
   settings: SiteSettingsPublic;
 }
 
-/** Public footer: contact channels, quick links, admin entry, copyright. */
+/** Public footer: contact channels, quick links, copyright. */
 export function Footer({ settings }: FooterProps) {
   const year = new Date().getFullYear();
 
@@ -116,16 +116,10 @@ export function Footer({ settings }: FooterProps) {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-hairline pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 border-t border-hairline pt-6">
           <p className="font-mono text-xs text-ink-faint">
             © {year} {settings.lab_name} · 保留所有权利
           </p>
-          <Link
-            href="/admin/login"
-            className="font-mono text-xs text-ink-faint underline-offset-4 transition-colors hover:text-ink-muted hover:underline"
-          >
-            管理入口
-          </Link>
         </div>
       </Container>
     </footer>
