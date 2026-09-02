@@ -1276,7 +1276,7 @@ body {
 
 .public-site .public-tool-mark-easyeda {
   padding: 0.22rem;
-  background: #ffffff;
+  background: linear-gradient(135deg, #eef6ff, #d7eaff);
 }
 
 .public-site .public-tool-mark-vscode {
@@ -1291,7 +1291,7 @@ body {
 
 .public-site .public-tool-mark-keil {
   padding: 0.1rem;
-  background: #1d4c73;
+  background: linear-gradient(135deg, #087f43, #2caf67);
 }
 
 .public-site .public-tool-mark-clion {
