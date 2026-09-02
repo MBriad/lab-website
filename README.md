@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Robotics Laboratory Website + Admin UI
 
-## Getting Started
+Next.js (App Router) frontend for the university robotics laboratory site:
+public website (`/`, `/research`, `/projects`, `/awards`, `/news`) and a
+content management console under `/admin/**`. Data access is centralized in
+`src/lib/api/` and typed from `contracts/openapi.json`.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router, Turbopack), React 19, TypeScript strict
+- Tailwind CSS 4 (CSS-first tokens in `src/app/globals.css`)
+- Package manager: pnpm
+
+## Scripts
+
+| Command          | Description                                        |
+| ---------------- | -------------------------------------------------- |
+| `pnpm dev`       | Start the dev server (http://localhost:3000)       |
+| `pnpm build`     | Production build                                   |
+| `pnpm start`     | Serve the production build                         |
+| `pnpm lint`      | ESLint                                             |
+| `pnpm typecheck` | `tsc --noEmit`                                     |
+| `pnpm test`      | Vitest unit tests (data layer + pure helpers)      |
+| `pnpm audit:contract` | Verify the data layer against `contracts/openapi.json` |
+
+## API modes
+
+The data layer switches between two implementations of the same `ApiClient`
+interface, selected by `NEXT_PUBLIC_API_MODE` (see `.env.example`):
+
+- **`mock` (default)** — deterministic in-memory fixtures; no backend needed.
+  Public pages are statically prerendered at build time.
+  Admin credentials (mock only): `admin` / `admin123`.
+- **`real`** — HTTP against the CMS backend defined by
+  `contracts/openapi.json`. The HTTP client sends every request with
+  `cache: "no-store"` (see `src/lib/api/http.ts`), which opts each data
+  route out of build-time prerendering: pages render per request, content
+  is never frozen into static HTML, and the build succeeds even when the
+  backend is unreachable. (Next 16 requires route segment config such as
+  `export const dynamic` to be a static string literal, so the mode switch
+  lives in the data layer instead of per-route exports.)
+
+### Pointing at the real backend
+
+Copy `.env.example` to `.env.local` and set:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_API_MODE=real
+NEXT_PUBLIC_API_BASE_URL=/api/v1
+BACKEND_ORIGIN=http://127.0.0.1:8000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then run the Codex backend (see `backend/`) and `pnpm dev`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+How the wiring works:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Browser:** requests go to the relative prefix `NEXT_PUBLIC_API_BASE_URL`
+  (default `/api/v1`); `next.config.ts` rewrites `/api/v1/*` to
+  `BACKEND_ORIGIN`, avoiding CORS during development.
+- **Server components:** relative URLs are not fetchable server-side, so the
+  API client automatically prefixes `BACKEND_ORIGIN` when rendering on the
+  server (see `resolveApiBaseUrl` in `src/lib/api/client.ts`).
+- **Images:** `BACKEND_ORIGIN` is allow-listed in `next.config.ts` remote
+  patterns so uploaded media can be optimized by `next/image`.
+- Setting `NEXT_PUBLIC_API_BASE_URL` to an absolute URL bypasses the proxy
+  entirely (browser and server both use it as-is).
 
-## Learn More
+### Auth in real mode
 
-To learn more about Next.js, take a look at the following resources:
+Login (`/admin/login`) stores the bearer token from
+`POST /api/v1/admin/auth/login` in `localStorage` (memory slot server-side).
+Every admin request sends `Authorization: Bearer <token>`; a `401` clears
+the token and redirects to `/admin/login`. There are no cookie sessions.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/lib/api/` — the only place that talks to data: `ApiClient` interface,
+  real HTTP client, mock adapter, bearer-token store, server read helpers.
+- `src/lib/types/api.ts` — contract-exact types derived from
+  `contracts/openapi.json` (no invented fields).
+- `src/app/(public)/` — public site routes (static prerender in mock mode).
+- `src/app/(admin)/admin/` — admin console (noindex, auth-guarded).
+- `src/components/` — public components, motion primitives, admin UI.
+- `public/mock-media/` — deterministic placeholder images used by mock data.

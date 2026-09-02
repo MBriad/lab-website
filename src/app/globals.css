@@ -1,26 +1,256 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   Robotics Laboratory design tokens — Wave A foundation
+   ----------------------------------------------------------------------------
+   Direction: dark, technical, HUD-flavored but readable. No Catime branding.
+
+   Conventions:
+   - Raw token values live on `:root` prefixed with `--lab-`.
+   - Tailwind utility names map onto them below via `@theme inline`, so later
+     waves use stable class names (bg-surface, text-ink-muted,
+     border-hairline, shadow-glow-accent, font-display, ...) without caring
+     about raw values.
+   - Fonts are system-first stacks so the build never depends on network font
+     fetches. To adopt next/font later, point `--lab-font-*` at the generated
+     `--font-*` variables; utility class names stay unchanged.
+   - `--motion-ok` is the motion capability flag: motion primitives (reveal,
+     parallax, magnetic buttons, ...) must read it or honor the
+     `prefers-reduced-motion` baseline at the bottom of this file.
+   ============================================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* -- Motion capability flag ------------------------------------------------ */
+  --motion-ok: 1;
+
+  /* -- Background layers ----------------------------------------------------- */
+  --lab-bg: #05070d; /* page background: near-black with a blue cast */
+  --lab-surface: #0b101b; /* raised panel */
+  --lab-surface-2: #101726; /* higher panel / hover surface */
+  --lab-overlay: #131c2e; /* modal / elevated overlay */
+
+  /* -- Ink / text scale (contrast checked against --lab-bg) ------------------ */
+  --lab-ink: #e8eef7; /* primary text, ~16:1 */
+  --lab-ink-muted: #a3b3cc; /* secondary text, ~7:1 (WCAG AA for body copy) */
+  --lab-ink-faint: #64748b; /* HUD metadata / decorative labels only */
+
+  /* -- Accents ---------------------------------------------------------------- */
+  --lab-accent: #22d3ee; /* primary: cyan/teal family */
+  --lab-accent-strong: #67e8f9; /* hover / highlight */
+  --lab-accent-deep: #0e7490; /* borders, tints, pressed states */
+  --lab-signal: #fbbf24; /* secondary: amber/signal */
+
+  /* -- Status ----------------------------------------------------------------- */
+  --lab-success: #34d399;
+  --lab-warning: #f59e0b;
+  --lab-danger: #f87171;
+
+  /* -- Hairlines / borders ---------------------------------------------------- */
+  --lab-hairline: rgba(148, 163, 184, 0.16);
+  --lab-hairline-strong: rgba(148, 163, 184, 0.32);
+
+  /* -- Type stacks (system-first; swap for next/font variables later) --------- */
+  --lab-font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
+    sans-serif;
+  /* Display voice: condensed feel is achieved via tracking/weight/uppercase
+     on top of the sans stack; keep this token so a condensed face can be
+     swapped in later without class changes. */
+  --lab-font-display: var(--lab-font-sans);
+  --lab-font-mono:
+    ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* -- Radius (sharp, HUD-like) ------------------------------------------------ */
+  --lab-radius-hud: 2px;
+  --lab-radius-panel: 6px;
+
+  /* -- Shadow / glow ----------------------------------------------------------- */
+  --lab-shadow-panel:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 30px rgba(2, 6, 23, 0.5);
+  --lab-shadow-glow-accent:
+    0 0 0 1px rgba(34, 211, 238, 0.25), 0 0 24px rgba(34, 211, 238, 0.18);
+  --lab-shadow-glow-signal:
+    0 0 0 1px rgba(251, 191, 36, 0.25), 0 0 24px rgba(251, 191, 36, 0.16);
 }
 
+/* Map raw tokens to Tailwind utility namespaces. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--lab-font-sans);
+  --font-display: var(--lab-font-display);
+  --font-mono: var(--lab-font-mono);
+
+  --color-background: var(--lab-bg);
+  --color-surface: var(--lab-surface);
+  --color-surface-2: var(--lab-surface-2);
+  --color-overlay: var(--lab-overlay);
+
+  --color-ink: var(--lab-ink);
+  --color-ink-muted: var(--lab-ink-muted);
+  --color-ink-faint: var(--lab-ink-faint);
+
+  --color-accent: var(--lab-accent);
+  --color-accent-strong: var(--lab-accent-strong);
+  --color-accent-deep: var(--lab-accent-deep);
+  --color-signal: var(--lab-signal);
+
+  --color-success: var(--lab-success);
+  --color-warning: var(--lab-warning);
+  --color-danger: var(--lab-danger);
+
+  --color-hairline: var(--lab-hairline);
+  --color-hairline-strong: var(--lab-hairline-strong);
+
+  --radius-hud: var(--lab-radius-hud);
+  --radius-panel: var(--lab-radius-panel);
+
+  --shadow-panel: var(--lab-shadow-panel);
+  --shadow-glow-accent: var(--lab-shadow-glow-accent);
+  --shadow-glow-signal: var(--lab-shadow-glow-signal);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* -- Custom HUD utilities ------------------------------------------------------ */
+
+/* 1px border in the hairline color (panels, separators). */
+@utility hairline {
+  border: 1px solid var(--lab-hairline);
+}
+
+/* Faint blueprint grid backdrop for HUD sections. */
+@utility hud-grid {
+  background-image:
+    linear-gradient(to right, var(--lab-hairline) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--lab-hairline) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* Standard raised HUD panel. */
+@utility hud-panel {
+  background: color-mix(in srgb, var(--lab-surface) 92%, transparent);
+  border: 1px solid var(--lab-hairline);
+  border-radius: var(--lab-radius-panel);
+  box-shadow: var(--lab-shadow-panel);
+}
+
+/* Vertical rhythm for page sections. */
+@utility section-pad {
+  padding-block: clamp(3.5rem, 9vw, 7rem);
+}
+
+/* -- Base ----------------------------------------------------------------------- */
+
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--lab-bg);
+  background-image:
+    radial-gradient(
+      1100px 540px at 75% -10%,
+      rgba(34, 211, 238, 0.07),
+      transparent 62%
+    ),
+    radial-gradient(
+      900px 480px at 8% 108%,
+      rgba(251, 191, 36, 0.05),
+      transparent 60%
+    );
+  color: var(--lab-ink);
+  font-family: var(--lab-font-sans);
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.25);
+}
+
+:focus-visible {
+  outline: 2px solid var(--lab-accent);
+  outline-offset: 2px;
+}
+
+/* -- Wave B motion + editorial utilities --------------------------------------------
+   All keyframe utilities here are neutralized by the reduced-motion kill-switch
+   below (duration forced to 0.01ms, iteration count to 1), so reduced-motion
+   users land on the final/static frame. */
+
+/* Entrance: fade + rise (hero copy, overlay links). */
+@keyframes lab-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-fade-up {
+  animation: lab-fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Breathing glow for HUD accents / status dots. */
+@keyframes lab-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@utility animate-breathe {
+  animation: lab-breathe 4.5s ease-in-out infinite;
+}
+
+/* Hero scroll cue: line grows down, then drains. */
+@keyframes lab-scroll-cue {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+@utility animate-scroll-cue {
+  animation: lab-scroll-cue 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+/* Hollow display numerals (research indexes, award years). */
+@utility text-outline-faint {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--lab-hairline-strong);
+}
+
+/* -- Reduced-motion baseline -----------------------------------------------------
+   Global kill-switch for CSS animation/transition plus the `--motion-ok` flag
+   that JS motion primitives read. Later waves must not bypass this. */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-ok: 0;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1400" viewBox="0 0 1000 1400" role="img" aria-label="CERTIFICATE">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1226"/>
+      <stop offset="1" stop-color="#92400e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="1400" fill="url(#bg)"/>
+  <g stroke="rgba(148,163,184,0.10)" stroke-width="1">
+    <line x1="100" y1="0" x2="100" y2="1400"/>
+    <line x1="200" y1="0" x2="200" y2="1400"/>
+    <line x1="300" y1="0" x2="300" y2="1400"/>
+    <line x1="400" y1="0" x2="400" y2="1400"/>
+    <line x1="500" y1="0" x2="500" y2="1400"/>
+    <line x1="600" y1="0" x2="600" y2="1400"/>
+    <line x1="700" y1="0" x2="700" y2="1400"/>
+    <line x1="800" y1="0" x2="800" y2="1400"/>
+    <line x1="900" y1="0" x2="900" y2="1400"/>
+    <line x1="0" y1="140" x2="1000" y2="140"/>
+    <line x1="0" y1="280" x2="1000" y2="280"/>
+    <line x1="0" y1="420" x2="1000" y2="420"/>
+    <line x1="0" y1="560" x2="1000" y2="560"/>
+    <line x1="0" y1="700" x2="1000" y2="700"/>
+    <line x1="0" y1="840" x2="1000" y2="840"/>
+    <line x1="0" y1="980" x2="1000" y2="980"/>
+    <line x1="0" y1="1120" x2="1000" y2="1120"/>
+    <line x1="0" y1="1260" x2="1000" y2="1260"/>
+  </g>
+  <circle cx="1000" cy="0" r="700" fill="none" stroke="rgba(34,211,238,0.18)" stroke-width="2"/>
+  <circle cx="0" cy="1400" r="466" fill="none" stroke="rgba(251,191,36,0.12)" stroke-width="2"/>
+  <text x="500" y="700" fill="#e8eef7" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="100" letter-spacing="6" text-anchor="middle" dominant-baseline="middle" opacity="0.9">CERTIFICATE</text>
+</svg>
