@@ -2,6 +2,7 @@
 
 import { DeviceOrientationControl } from "@/components/motion/device-orientation-control";
 import { MagneticButton } from "@/components/motion/magnetic-button";
+import { TiltCard } from "@/components/motion/tilt-card";
 import { Container } from "@/components/ui/container";
 import { HudLink } from "@/components/ui/hud-link";
 import { MediaImage } from "@/components/ui/media-image";
@@ -20,9 +21,9 @@ function splitTitle(title: string): { leading: string; emphasis: string | null }
 }
 
 /**
- * Public focal point: an airy editorial hero with a cool glass atmosphere.
- * Decorative rings and light are kept outside the content hierarchy, while
- * the optional orientation action stays close to the first-viewport CTAs.
+ * Public focal point: a centered editorial hero with a large project image
+ * beneath the CTAs. Pointer gravity remains global while the media stage uses
+ * the shared tilt primitive for a restrained, cati-inspired depth cue.
  */
 export function Hero({ settings, heroMedia = null }: HeroProps) {
   const title = splitTitle(settings.hero_title ?? settings.lab_name);
@@ -37,23 +38,10 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
       <div aria-hidden className="public-hero-grid" />
       <div aria-hidden className="public-motion-layer public-hero-orbit absolute top-[21%] left-[9%] h-28 w-56 opacity-70 sm:h-40 sm:w-80" />
       <div aria-hidden className="public-motion-layer public-hero-orbit absolute right-[6%] bottom-[17%] h-24 w-44 opacity-50 sm:h-36 sm:w-64" />
-      {heroMedia ? (
-        <div aria-hidden className="public-hero-media public-motion-layer absolute right-[4%] bottom-[22%] hidden w-56 opacity-20 lg:block xl:w-72">
-          <MediaImage
-            media={heroMedia}
-            alt=""
-            mode="cover"
-            className="aspect-[4/3] w-full overflow-hidden rounded-[28px] border border-white/70 bg-white/30 p-2"
-            sizes="288px"
-            imgClassName="rounded-[20px] object-cover mix-blend-multiply saturate-0"
-          />
-          <span className="mt-3 block text-right font-mono text-[9px] tracking-[0.28em] text-ink-faint uppercase">LAB / VISUAL FIELD</span>
-        </div>
-      ) : null}
       <div aria-hidden className="absolute top-[25%] right-[11%] h-2 w-2 rounded-full bg-accent/60 shadow-glow-accent" />
       <div aria-hidden className="absolute bottom-[29%] left-[16%] h-1.5 w-1.5 rounded-full bg-signal/70" />
 
-      <Container width="wide" className="relative z-10 flex w-full flex-col items-center py-24 text-center sm:py-32">
+      <Container width="wide" className="relative z-10 flex w-full flex-col items-center py-14 text-center sm:py-16 lg:py-20">
         <p
           className="font-mono text-[10px] tracking-[0.38em] text-accent uppercase animate-fade-up sm:text-xs"
           style={{ animationDelay: "0.05s" }}
@@ -62,7 +50,7 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
         </p>
 
         <h1
-          className="mt-7 max-w-5xl font-display text-[clamp(3rem,8.5vw,8rem)] leading-[0.98] font-semibold tracking-[-0.06em] text-ink animate-fade-up sm:mt-9"
+          className="mt-5 max-w-5xl font-display text-[clamp(3rem,6.5vw,6.5rem)] leading-[0.98] font-semibold tracking-[-0.06em] text-ink animate-fade-up sm:mt-9"
           style={{ animationDelay: "0.14s" }}
         >
           <span className="block">{title.leading}</span>
@@ -73,7 +61,7 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
 
         {settings.hero_subtitle ? (
           <p
-            className="mt-7 max-w-2xl text-base leading-7 text-ink-muted animate-fade-up sm:mt-8 sm:text-lg sm:leading-8"
+            className="mt-5 max-w-2xl text-base leading-7 text-ink-muted animate-fade-up sm:mt-6 sm:text-lg sm:leading-8"
             style={{ animationDelay: "0.25s" }}
           >
             {settings.hero_subtitle}
@@ -81,7 +69,7 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
         ) : null}
 
         <p
-          className="mt-6 font-mono text-[10px] tracking-[0.3em] text-ink-faint uppercase animate-fade-up sm:mt-7"
+          className="mt-5 font-mono text-[10px] tracking-[0.3em] text-ink-faint uppercase animate-fade-up sm:mt-6"
           style={{ animationDelay: "0.34s" }}
         >
           {settings.tagline ?? "ROBOTICS · INTELLIGENCE · EDUCATION"}
@@ -89,7 +77,7 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
         </p>
 
         <div
-          className="mt-9 flex flex-wrap items-center justify-center gap-3 animate-fade-up sm:mt-10 sm:gap-4"
+          className="mt-7 flex flex-wrap items-center justify-center gap-3 animate-fade-up sm:mt-10 sm:gap-4"
           style={{ animationDelay: "0.43s" }}
         >
           <MagneticButton>
@@ -105,10 +93,43 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
           <DeviceOrientationControl />
         </div>
 
+        <TiltCard
+          maxTiltDeg={3.6}
+          maxShiftPx={5}
+          hoverScale={1.008}
+          className="public-hero-stage relative mt-9 w-full max-w-3xl -rotate-[1.4deg] animate-fade-up sm:mt-11 sm:-rotate-1"
+          style={{ animationDelay: "0.58s" }}
+        >
+          <div className="public-hero-stage-glow" aria-hidden />
+          <div className="public-hero-stage-inner">
+            {heroMedia ? (
+              <MediaImage
+                media={heroMedia}
+                alt="实验室项目影像"
+                mode="cover"
+                className="h-full w-full"
+                sizes="(min-width: 1280px) 896px, (min-width: 640px) 82vw, 92vw"
+                imgClassName="object-cover"
+                priority
+              />
+            ) : (
+              <div className="public-hero-stage-empty" aria-hidden>
+                <span className="public-hero-stage-empty-ring" />
+                <span className="font-mono text-[10px] tracking-[0.3em] text-ink-faint uppercase">PROJECT VISUAL ARCHIVE</span>
+              </div>
+            )}
+            <div className="public-hero-stage-sheen" aria-hidden />
+            <div className="public-hero-stage-meta">
+              <span>LAB / VISUAL FIELD</span>
+              <span>{heroMedia ? "PROJECT COVER" : "MEDIA PENDING"}</span>
+            </div>
+          </div>
+        </TiltCard>
+
         <div
           aria-hidden
-          className="public-hero-frame relative mt-14 flex w-full max-w-4xl flex-wrap items-center justify-between gap-5 px-5 py-4 text-left animate-fade-up sm:mt-20 sm:px-8 sm:py-5"
-          style={{ animationDelay: "0.58s" }}
+          className="public-hero-frame relative mt-5 flex w-full max-w-4xl flex-wrap items-center justify-between gap-5 px-5 py-4 text-left animate-fade-up sm:mt-6 sm:px-8 sm:py-5"
+          style={{ animationDelay: "0.7s" }}
         >
           <div className="relative flex items-center gap-3">
             <span className="relative grid h-11 w-11 place-items-center rounded-full border border-accent/30 bg-white/40">

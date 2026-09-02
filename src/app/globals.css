@@ -502,6 +502,119 @@ body {
   transform: rotate(18deg);
 }
 
+.public-site .public-hero-stage {
+  aspect-ratio: 16 / 7.25;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.public-site .public-hero-stage-inner {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 28px 65px rgba(113, 148, 255, 0.16);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+
+.public-site .public-hero-stage-inner::before,
+.public-site .public-hero-stage-inner::after {
+  position: absolute;
+  z-index: 1;
+  content: "";
+  pointer-events: none;
+}
+
+.public-site .public-hero-stage-inner::before {
+  inset: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  border-radius: 25px;
+}
+
+.public-site .public-hero-stage-inner::after {
+  right: 5%;
+  bottom: 11%;
+  width: 24%;
+  height: 32%;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+
+.public-site .public-hero-stage-glow {
+  position: absolute;
+  inset: 12% 18% -18%;
+  border-radius: 50%;
+  background: linear-gradient(120deg, rgba(113, 148, 255, 0.25), rgba(242, 127, 172, 0.22));
+  filter: blur(30px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.public-site .public-hero-stage-inner > img,
+.public-site .public-hero-stage-inner > picture,
+.public-site .public-hero-stage-inner > video {
+  display: block;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  filter: saturate(0.82) contrast(0.96);
+}
+
+.public-site .public-hero-stage-empty {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  background:
+    radial-gradient(circle at 24% 30%, rgba(113, 148, 255, 0.2), transparent 24%),
+    radial-gradient(circle at 75% 64%, rgba(242, 127, 172, 0.18), transparent 25%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.78), rgba(225, 229, 255, 0.34));
+}
+
+.public-site .public-hero-stage-empty-ring {
+  position: absolute;
+  width: 42%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(113, 148, 255, 0.2);
+  border-radius: 50%;
+  transform: rotate(24deg) scaleX(1.5);
+}
+
+.public-site .public-hero-stage-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(115deg, transparent 12%, rgba(255, 255, 255, 0.18) 46%, transparent 72%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.public-site .public-hero-stage-meta {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.25rem;
+  left: 1.5rem;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--lab-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.84);
+  text-transform: uppercase;
+  text-shadow: 0 1px 12px rgba(32, 42, 67, 0.22);
+}
+
+.public-site .public-scroll-progress {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+}
 .public-site .public-hero-frame {
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 30px;
@@ -563,12 +676,33 @@ body {
   .public-site .hud-panel,
   .public-site .glass-panel-strong,
   .public-site .glass-chip,
-  .public-site .public-hero-frame {
+  .public-site .public-hero-frame,
+  .public-site .public-hero-stage-inner {
     background: rgba(255, 255, 255, 0.9);
   }
 }
 
 @media (max-width: 767px) {
+  .public-site .public-hero-stage {
+    aspect-ratio: 1.24 / 1;
+  }
+
+  .public-site .public-hero-stage-inner {
+    border-radius: 24px;
+  }
+
+  .public-site .public-hero-stage-inner::before {
+    inset: 0.55rem;
+    border-radius: 18px;
+  }
+
+  .public-site .public-hero-stage-meta {
+    right: 1rem;
+    bottom: 0.85rem;
+    left: 1rem;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+  }
   .public-site .public-artwork-word {
     top: 12rem;
     font-size: 31vw;
