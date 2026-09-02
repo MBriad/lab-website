@@ -26,7 +26,7 @@ export function AdminBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-hud border px-2 py-0.5",
+        "admin-badge inline-flex items-center gap-1 rounded-hud border px-2 py-0.5",
         "font-mono text-[11px] tracking-wider whitespace-nowrap",
         TONE_CLS[tone],
         className,

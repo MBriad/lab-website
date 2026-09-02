@@ -29,7 +29,7 @@ export function Notice({ notice, onClose, className }: NoticeProps) {
     <div
       role={notice.tone === "error" ? "alert" : "status"}
       className={cn(
-        "flex items-start justify-between gap-3 rounded-panel border px-4 py-3 text-sm",
+        "admin-notice flex items-start justify-between gap-3 rounded-panel border px-4 py-3 text-sm",
         TONE_CLS[notice.tone],
         className,
       )}

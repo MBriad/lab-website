@@ -81,11 +81,19 @@ export default async function HomePage() {
         heroMedia={home.featuredProjects[0]?.cover ?? null}
       />
       <LabAuthority settings={home.settings} />
-      <ResearchPreview areas={home.researchAreas} />
-      <FeaturedProjects projects={home.featuredProjects} />
-      <FeaturedAwards awards={home.featuredAwards} />
-      <LatestNews news={home.latestNews.slice(0, 3)} />
-      <GalleryStrip items={gallery} />
+      {home.researchAreas.length > 0 ? (
+        <ResearchPreview areas={home.researchAreas} />
+      ) : null}
+      {home.featuredProjects.length > 0 ? (
+        <FeaturedProjects projects={home.featuredProjects} />
+      ) : null}
+      {home.featuredAwards.length > 0 ? (
+        <FeaturedAwards awards={home.featuredAwards} />
+      ) : null}
+      {home.latestNews.length > 0 ? (
+        <LatestNews news={home.latestNews.slice(0, 3)} />
+      ) : null}
+      {gallery.length > 0 ? <GalleryStrip items={gallery} /> : null}
       <ContactSection settings={home.settings} />
     </>
   );

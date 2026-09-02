@@ -204,7 +204,7 @@ export function ResearchForm({ areaId }: ResearchFormProps) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="admin-page-header flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] tracking-[0.3em] text-accent uppercase">
             {"SEC.04 // RESEARCH"}

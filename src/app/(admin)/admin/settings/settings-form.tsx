@@ -232,6 +232,7 @@ export function SettingsForm() {
       const saved = await api.updateSiteSettings(patch);
       setForm((prev) => ({ ...prev, logo: saved.logo }));
       show("success", "站点设置已保存。");
+      router.refresh();
     } catch (err) {
       if (isAuthError(err)) {
         redirectToLogin(router);
@@ -258,7 +259,7 @@ export function SettingsForm() {
 
   return (
     <div className="space-y-5">
-      <div>
+      <div className="admin-page-header">
         <p className="font-mono text-[11px] tracking-[0.3em] text-accent uppercase">
           {"SEC.07 // SETTINGS"}
         </p>
@@ -267,6 +268,10 @@ export function SettingsForm() {
         </h1>
         <p className="mt-1 text-xs text-ink-muted">
           站点标题、实验室名称、首页文案与联系方式。
+        </p>
+        <p className="admin-settings-sync-note mt-3 text-xs leading-5 text-ink-muted">
+          <span aria-hidden className="admin-settings-sync-dot" />
+          保存后公开站点会读取最新设置；新闻与项目还需发布后才会在前台展示。
         </p>
       </div>
 
@@ -371,16 +376,32 @@ export function SettingsForm() {
           </Field>
         </AdminCard>
 
-        <AdminCard className="space-y-4">
-          <AdminCardHeading title="官方指标" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {(["paper_count", "patent_count", "active_project_count", "trained_student_count"] as const).map((key) => (
-              <Field key={key} label={{ paper_count: "论文", patent_count: "专利", active_project_count: "在研项目", trained_student_count: "训练学生" }[key]} htmlFor={`settings-${key}`} error={fieldErrors[key]}>
-                <Input id={`settings-${key}`} type="number" min={0} step={1} value={form[key]} onChange={(e) => setField(key, e.target.value)} invalid={Boolean(fieldErrors[key])} />
-              </Field>
-            ))}
+        <details className="admin-advanced-disclosure">
+          <summary className="admin-advanced-summary">
+            <span>
+              <span className="font-medium text-ink">官方指标</span>
+              <span className="ml-2 text-xs text-ink-muted">可选维护项</span>
+            </span>
+            <span className="admin-advanced-summary-hint">
+              当前首页不展示
+            </span>
+          </summary>
+          <div className="mt-3">
+            <AdminCard className="space-y-4">
+              <AdminCardHeading
+                title="官方指标"
+                description="这些字段保留在 API 中供后续使用，当前不会显示在公开首页。"
+              />
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {(["paper_count", "patent_count", "active_project_count", "trained_student_count"] as const).map((key) => (
+                  <Field key={key} label={{ paper_count: "论文", patent_count: "专利", active_project_count: "在研项目", trained_student_count: "训练学生" }[key]} htmlFor={`settings-${key}`} error={fieldErrors[key]}>
+                    <Input id={`settings-${key}`} type="number" min={0} step={1} value={form[key]} onChange={(e) => setField(key, e.target.value)} invalid={Boolean(fieldErrors[key])} />
+                  </Field>
+                ))}
+              </div>
+            </AdminCard>
           </div>
-        </AdminCard>
+        </details>
 
         <AdminCard className="space-y-4">
           <AdminCardHeading title="转化入口" />

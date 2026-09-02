@@ -71,7 +71,7 @@ export function Dialog({
         aria-label={title}
         tabIndex={-1}
         className={cn(
-          "hud-panel relative flex max-h-[85vh] w-full flex-col focus:outline-none",
+          "admin-dialog hud-panel relative flex max-h-[85vh] w-full flex-col focus:outline-none",
           SIZE_CLS[size],
         )}
       >

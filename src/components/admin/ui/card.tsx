@@ -14,7 +14,7 @@ export function AdminCard({
 }: AdminCardProps) {
   return (
     <div
-      className={cn("hud-panel", padded && "p-5 sm:p-6", className)}
+      className={cn("admin-card hud-panel", padded && "p-5 sm:p-6", className)}
       {...props}
     />
   );
@@ -33,7 +33,7 @@ export function AdminCardHeading({
   className,
 }: AdminCardHeadingProps) {
   return (
-    <div className={cn("mb-4", className)}>
+    <div className={cn("admin-card-heading mb-4", className)}>
       <h2 className="font-display text-base font-semibold text-ink">{title}</h2>
       {description ? (
         <p className="mt-1 text-xs leading-5 text-ink-muted">{description}</p>

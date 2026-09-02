@@ -17,18 +17,19 @@ import { Spinner } from "./ui/spinner";
 interface AdminNavItem {
   href: string;
   label: string;
+  code: string;
   /** Exact match (dashboard) vs prefix match (sections). */
   exact?: boolean;
 }
 
 const NAV_ITEMS: AdminNavItem[] = [
-  { href: "/admin", label: "仪表盘", exact: true },
-  { href: "/admin/news", label: "新闻" },
-  { href: "/admin/projects", label: "项目" },
-  { href: "/admin/research", label: "研究方向" },
-  { href: "/admin/awards", label: "荣誉" },
-  { href: "/admin/media", label: "素材库" },
-  { href: "/admin/settings", label: "设置" },
+  { href: "/admin", label: "仪表盘", code: "00", exact: true },
+  { href: "/admin/news", label: "新闻", code: "01" },
+  { href: "/admin/projects", label: "项目", code: "02" },
+  { href: "/admin/research", label: "研究方向", code: "03" },
+  { href: "/admin/awards", label: "荣誉", code: "04" },
+  { href: "/admin/media", label: "素材库", code: "05" },
+  { href: "/admin/settings", label: "设置", code: "06" },
 ];
 
 function isActive(pathname: string, item: AdminNavItem): boolean {
@@ -57,6 +58,16 @@ export function AdminShell({ children }: AdminShellProps) {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+
+  // Prevent the page behind the mobile drawer from moving while it is open.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [drawerOpen]);
 
   // Auth is decided solely by `getMe()`; a settings fetch failure should not
   // log the user out.
@@ -115,15 +126,15 @@ export function AdminShell({ children }: AdminShellProps) {
 
   // The login route renders without the guarded chrome.
   if (isLoginPage) {
-    return <>{children}</>;
+    return <div className="admin-site min-h-screen">{children}</div>;
   }
 
   if (status !== "authed") {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="admin-site flex min-h-screen items-center justify-center">
         <div
           role="status"
-          className="flex items-center gap-3 text-sm text-ink-muted"
+          className="flex items-center gap-3 rounded-panel border border-hairline bg-surface/80 px-5 py-4 text-sm text-ink-muted shadow-panel"
         >
           <Spinner className="text-accent" />
           <span>{status === "denied" ? "登录已过期…" : "正在验证身份…"}</span>
@@ -132,26 +143,32 @@ export function AdminShell({ children }: AdminShellProps) {
     );
   }
 
+  const activeItem = NAV_ITEMS.find((item) => isActive(pathname, item));
+
   return (
-    <div className="min-h-screen lg:pl-60">
+    <div className="admin-site min-h-screen lg:pl-64">
       {/* Sidebar (fixed on desktop) */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-60 border-r border-hairline bg-surface",
+          "admin-shell-sidebar fixed inset-y-0 left-0 z-40 w-64 border-r border-hairline bg-surface",
           "flex-col transition-transform duration-150 lg:flex lg:translate-x-0",
           drawerOpen ? "flex translate-x-0" : "hidden -translate-x-full lg:flex",
         )}
       >
-        <div className="border-b border-hairline px-4 py-4">
-          <p className="font-mono text-[11px] tracking-[0.3em] text-accent uppercase">
-            {"ADMIN // 控制台"}
-          </p>
-          <p className="mt-1 truncate font-display text-sm font-semibold text-ink">
-            {labName}
-          </p>
+        <div className="admin-sidebar-brand flex items-center gap-3 border-b px-5 py-5">
+          <span className="admin-brand-mark" aria-hidden>
+            R
+          </span>
+          <div className="min-w-0">
+            <p className="admin-sidebar-eyebrow">ROBOTICS LAB / CMS</p>
+            <p className="mt-1 truncate font-display text-sm font-semibold text-ink">
+              {labName}
+            </p>
+          </div>
         </div>
-        <nav aria-label="管理导航" className="flex-1 overflow-y-auto p-3">
-          <ul className="space-y-1">
+        <nav aria-label="管理导航" className="flex-1 overflow-y-auto px-5 py-6">
+          <p className="admin-nav-caption mb-3">内容管理</p>
+          <ul className="space-y-1.5">
             {NAV_ITEMS.map((item) => (
               <li key={item.href}>
                 <Link
@@ -159,25 +176,31 @@ export function AdminShell({ children }: AdminShellProps) {
                   onClick={closeDrawer}
                   aria-current={isActive(pathname, item) ? "page" : undefined}
                   className={cn(
-                    "block rounded-hud px-3 py-2 text-sm transition-colors",
+                    "admin-nav-link rounded-hud px-3 py-2",
+                    isActive(pathname, item) && "admin-nav-link-active",
                     isActive(pathname, item)
-                      ? "bg-accent/10 text-accent"
-                      : "text-ink-muted hover:bg-surface-2 hover:text-ink",
+                      ? "text-accent"
+                      : "text-ink-muted",
                   )}
                 >
-                  {item.label}
+                  <span className="admin-nav-index" aria-hidden>
+                    {item.code}
+                  </span>
+                  <span className="min-w-0 flex-1">{item.label}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
-        <div className="border-t border-hairline p-3">
+        <div className="admin-sidebar-footer border-t p-4">
           <Link
             href="/"
+            prefetch={false}
             onClick={closeDrawer}
-            className="block rounded-hud px-3 py-2 font-mono text-xs text-ink-faint transition-colors hover:bg-surface-2 hover:text-ink-muted"
+            className="admin-back-link rounded-hud px-3 py-2.5"
           >
-            ← 返回前台站点
+            <span>查看前台站点</span>
+            <span aria-hidden>↗</span>
           </Link>
         </div>
       </aside>
@@ -193,8 +216,8 @@ export function AdminShell({ children }: AdminShellProps) {
       ) : null}
 
       {/* Top bar */}
-      <header className="sticky top-0 z-20 border-b border-hairline bg-surface/80 backdrop-blur">
-        <div className="flex h-14 items-center gap-3 px-4 sm:px-6">
+      <header className="admin-topbar sticky top-0 z-20 border-b backdrop-blur">
+        <div className="admin-topbar-inner flex items-center gap-3 px-4 sm:px-8">
           <button
             type="button"
             onClick={() => setDrawerOpen((open) => !open)}
@@ -206,11 +229,17 @@ export function AdminShell({ children }: AdminShellProps) {
               {drawerOpen ? "×" : "≡"}
             </span>
           </button>
-          <p className="truncate font-display text-sm font-semibold text-ink">
-            {labName}
-          </p>
+          <div className="min-w-0 truncate">
+            <p className="admin-topbar-eyebrow hidden sm:block">
+              {activeItem ? `WORKSPACE / ${activeItem.code}` : "WORKSPACE"}
+            </p>
+            <p className="admin-context truncate">
+              {activeItem?.label ?? labName}
+            </p>
+          </div>
           <div className="ml-auto flex items-center gap-3">
-            <span className="hidden font-mono text-xs text-ink-faint sm:inline">
+            <span className="admin-user hidden sm:inline-flex">
+              <span className="admin-user-dot" aria-hidden />
               {admin ? admin.username : "…"}
             </span>
             <Button
@@ -225,7 +254,7 @@ export function AdminShell({ children }: AdminShellProps) {
         </div>
       </header>
 
-      <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+      <main className="admin-main">{children}</main>
     </div>
   );
 }

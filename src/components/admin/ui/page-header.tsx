@@ -21,7 +21,7 @@ export function AdminPageHeader({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-end justify-between gap-4",
+        "admin-page-header flex flex-wrap items-end justify-between gap-4",
         className,
       )}
     >
@@ -35,7 +35,7 @@ export function AdminPageHeader({
           {title}
         </h1>
         {description ? (
-          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-ink-muted">
+          <p className="admin-page-header-description mt-1.5 max-w-2xl text-sm leading-6 text-ink-muted">
             {description}
           </p>
         ) : null}

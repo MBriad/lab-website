@@ -75,13 +75,13 @@ export function Dashboard() {
 
   if (loading || !data) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="admin-dashboard space-y-6">
+        <div className="admin-stat-grid">
           {Array.from({ length: 5 }, (_, i) => (
-            <AdminSkeleton key={i} className="h-24" />
+            <AdminSkeleton key={i} className="admin-stat-tile h-32" />
           ))}
         </div>
-        <AdminSkeleton className="h-64" />
+        <AdminSkeleton className="h-72 rounded-panel" />
       </div>
     );
   }
@@ -95,40 +95,53 @@ export function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="admin-dashboard space-y-6">
+      <div className="admin-dashboard-hero flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="font-mono text-[11px] tracking-[0.3em] text-accent uppercase">
-            {"SEC.01 // OVERVIEW"}
-          </p>
-          <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">
-            仪表盘
+          <p className="admin-dashboard-kicker">WORKSPACE / OVERVIEW</p>
+          <h1 className="admin-dashboard-title mt-2 font-display font-semibold">
+            内容总览
           </h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-ink-muted">
+            管理公开站点的内容、媒体与展示顺序。保存后可从前台入口快速确认效果。
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/admin/news/new" variant="primary" size="sm">
+        <div className="admin-dashboard-actions flex flex-wrap gap-2">
+          <ButtonLink href="/" prefetch={false} variant="secondary" size="sm">
+            查看前台
+          </ButtonLink>
+          <ButtonLink href="/admin/news/new" prefetch={false} variant="primary" size="sm">
             新建新闻
           </ButtonLink>
-          <ButtonLink href="/admin/projects/new" variant="secondary" size="sm">
+          <ButtonLink href="/admin/projects/new" prefetch={false} variant="secondary" size="sm">
             新建项目
           </ButtonLink>
-          <ButtonLink href="/admin/awards/new" variant="secondary" size="sm">
+          <ButtonLink href="/admin/awards/new" prefetch={false} variant="secondary" size="sm">
             新建荣誉
           </ButtonLink>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
-        {tiles.map((tile) => (
+      <div className="admin-stat-grid">
+        {tiles.map((tile, index) => (
           <Link
             key={tile.href}
             href={tile.href}
-            className="hud-panel p-4 transition-colors hover:border-accent/40"
+            prefetch={false}
+            className="admin-stat-tile"
           >
-            <p className="font-mono text-[11px] tracking-[0.2em] text-ink-faint uppercase">
+            <div className="flex items-center justify-between gap-2">
+              <span className="admin-stat-index">
+                {String(index).padStart(2, "0")}
+              </span>
+              <span aria-hidden className="admin-stat-arrow">
+                ↗
+              </span>
+            </div>
+            <p className="admin-stat-label mt-2">
               {tile.label}
             </p>
-            <p className="mt-2 font-display text-3xl font-semibold text-ink">
+            <p className="admin-stat-value">
               {tile.total === null ? (
                 <span className="text-base text-danger">加载失败</span>
               ) : (
@@ -139,13 +152,14 @@ export function Dashboard() {
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="hud-panel p-5">
-          <div className="flex items-center justify-between">
+      <div className="admin-dashboard-grid">
+        <section className="admin-list-panel hud-panel">
+          <div className="admin-list-panel-heading">
             <h2 className="font-display text-base font-semibold">最近新闻</h2>
             <Link
               href="/admin/news"
-              className="font-mono text-xs text-accent hover:text-accent-strong"
+              prefetch={false}
+              className="admin-list-link"
             >
               全部 →
             </Link>
@@ -153,32 +167,37 @@ export function Dashboard() {
           {data.recentNews.length === 0 ? (
             <p className="mt-4 text-sm text-ink-muted">暂无新闻。</p>
           ) : (
-            <ul className="mt-3 divide-y divide-hairline">
+            <ul className="mt-1">
               {data.recentNews.map((item) => (
-                <li key={item.id} className="flex items-center gap-3 py-2.5">
-                  <span className="min-w-0 flex-1 truncate text-sm text-ink">
-                    {item.title}
-                  </span>
-                  {item.published_at ? (
-                    <AdminBadge tone="success">已发布</AdminBadge>
-                  ) : (
-                    <AdminBadge tone="neutral">草稿</AdminBadge>
-                  )}
-                  <span className="hidden shrink-0 font-mono text-[11px] text-ink-faint sm:inline">
-                    {formatDate(item.updated_at)}
-                  </span>
+                <li key={item.id} className="admin-list-row">
+                  <Link
+                    href={`/admin/news/${item.id}`}
+                    prefetch={false}
+                    className="admin-list-row-link"
+                  >
+                    <span className="admin-list-row-title">{item.title}</span>
+                    {item.published_at ? (
+                      <AdminBadge tone="success">已发布</AdminBadge>
+                    ) : (
+                      <AdminBadge tone="neutral">草稿</AdminBadge>
+                    )}
+                    <span className="admin-list-row-meta hidden sm:inline">
+                      {formatDate(item.updated_at)}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>
           )}
         </section>
 
-        <section className="hud-panel p-5">
-          <div className="flex items-center justify-between">
+        <section className="admin-list-panel hud-panel">
+          <div className="admin-list-panel-heading">
             <h2 className="font-display text-base font-semibold">最近项目</h2>
             <Link
               href="/admin/projects"
-              className="font-mono text-xs text-accent hover:text-accent-strong"
+              prefetch={false}
+              className="admin-list-link"
             >
               全部 →
             </Link>
@@ -186,20 +205,24 @@ export function Dashboard() {
           {data.recentProjects.length === 0 ? (
             <p className="mt-4 text-sm text-ink-muted">暂无项目。</p>
           ) : (
-            <ul className="mt-3 divide-y divide-hairline">
+            <ul className="mt-1">
               {data.recentProjects.map((item) => (
-                <li key={item.id} className="flex items-center gap-3 py-2.5">
-                  <span className="min-w-0 flex-1 truncate text-sm text-ink">
-                    {item.title}
-                  </span>
-                  {item.published_at ? (
-                    <AdminBadge tone="success">已发布</AdminBadge>
-                  ) : (
-                    <AdminBadge tone="neutral">草稿</AdminBadge>
-                  )}
-                  <span className="hidden shrink-0 font-mono text-[11px] text-ink-faint sm:inline">
-                    排序 {item.sort_order}
-                  </span>
+                <li key={item.id} className="admin-list-row">
+                  <Link
+                    href={`/admin/projects/${item.id}`}
+                    prefetch={false}
+                    className="admin-list-row-link"
+                  >
+                    <span className="admin-list-row-title">{item.title}</span>
+                    {item.published_at ? (
+                      <AdminBadge tone="success">已发布</AdminBadge>
+                    ) : (
+                      <AdminBadge tone="neutral">草稿</AdminBadge>
+                    )}
+                    <span className="admin-list-row-meta">
+                      排序 {item.sort_order}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>

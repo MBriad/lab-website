@@ -6,7 +6,7 @@ export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "md" | "sm";
 
 const BASE_CLS =
-  "inline-flex items-center justify-center gap-2 rounded-hud font-medium whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "admin-button inline-flex items-center justify-center gap-2 rounded-hud font-medium whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 
 const SIZE_CLS: Record<ButtonSize, string> = {
   md: "h-9 px-4 text-sm",
@@ -49,6 +49,8 @@ export function Button({
   return (
     <button
       className={buttonClasses(variant, size, className)}
+      data-variant={variant}
+      data-size={size}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...props}
@@ -76,5 +78,12 @@ export function ButtonLink({
   className,
   ...props
 }: ButtonLinkProps) {
-  return <Link className={buttonClasses(variant, size, className)} {...props} />;
+  return (
+    <Link
+      className={buttonClasses(variant, size, className)}
+      data-variant={variant}
+      data-size={size}
+      {...props}
+    />
+  );
 }

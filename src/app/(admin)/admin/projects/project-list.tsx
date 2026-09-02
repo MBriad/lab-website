@@ -60,6 +60,13 @@ export function ProjectList() {
       "已发布，前台可见。",
     );
 
+  const handleToggleVisible = (item: ProjectAdmin) =>
+    runMutation(
+      item.id,
+      () => api.updateProject(item.id, { is_visible: !item.is_visible }),
+      item.is_visible ? "已隐藏，前台不再展示。" : "已显示，发布内容可在前台展示。",
+    );
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     const target = deleteTarget;
@@ -156,6 +163,14 @@ export function ProjectList() {
                           发布
                         </Button>
                       ) : null}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={busyId === item.id}
+                        onClick={() => handleToggleVisible(item)}
+                      >
+                        {item.is_visible ? "隐藏" : "显示"}
+                      </Button>
                       <ButtonLink
                         href={`/admin/projects/${item.id}`}
                         variant="secondary"

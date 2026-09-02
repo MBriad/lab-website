@@ -13,9 +13,9 @@ export type TableProps = HTMLAttributes<HTMLTableElement>;
  */
 export function Table({ className, children, ...props }: TableProps) {
   return (
-    <div className="hairline overflow-x-auto rounded-panel bg-surface/40">
+    <div className="admin-table-wrap hairline overflow-x-auto rounded-panel bg-surface/40">
       <table
-        className={cn("w-full min-w-[720px] border-collapse text-sm", className)}
+        className={cn("admin-table w-full min-w-[720px] border-collapse text-sm", className)}
         {...props}
       >
         {children}
