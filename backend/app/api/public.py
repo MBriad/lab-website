@@ -147,6 +147,7 @@ def get_project(
     summary="List visible research areas",
 )
 def list_research_areas(
+    request: Request,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -154,11 +155,20 @@ def list_research_areas(
     query = (
         select(ResearchArea)
         .where(ResearchArea.is_visible.is_(True))
+        .options(
+            joinedload(ResearchArea.representative_project).joinedload(
+                Project.cover_media
+            )
+        )
         .order_by(ResearchArea.sort_order.asc(), ResearchArea.id.asc())
     )
     items, total, pages = page_query(db, query, page, page_size)
     return _page_response(
-        [research_area_public(item) for item in items], page, page_size, total, pages
+        [research_area_public(item, request) for item in items],
+        page,
+        page_size,
+        total,
+        pages,
     )
 
 

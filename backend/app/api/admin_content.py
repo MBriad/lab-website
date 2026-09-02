@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Query, Request, UploadFile, status
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, or_, select, update
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import get_current_admin, get_db
@@ -33,6 +33,7 @@ from app.services.common import (
     ensure_media_exists,
     get_or_404,
     page_query,
+    ensure_project_exists,
     update_model,
 )
 from app.services.serializers import (
@@ -86,6 +87,19 @@ def _visible_filter(model: type[News] | type[Project]) -> object:
     return and_(
         model.is_visible.is_(True),
         or_(model.published_at.is_(None), model.published_at <= now),
+    )
+
+
+def _stringify_urls(values: dict[str, object], *fields: str) -> None:
+    for field in fields:
+        value = values.get(field)
+        if value is not None:
+            values[field] = str(value)
+
+
+def _research_area_query() -> object:
+    return select(ResearchArea).options(
+        joinedload(ResearchArea.representative_project).joinedload(Project.cover_media)
     )
 
 
@@ -242,7 +256,9 @@ def create_project(
 ) -> ProjectAdmin:
     _ensure_unique_slug(db, Project, payload.slug)
     ensure_media_exists(db, payload.cover_media_id)
-    item = Project(**payload.model_dump())
+    values = payload.model_dump()
+    _stringify_urls(values, "demo_url")
+    item = Project(**values)
     db.add(item)
     commit_or_raise(db, "A project with this slug already exists")
     db.refresh(item)
@@ -266,6 +282,7 @@ def update_project(
         _ensure_unique_slug(db, Project, values["slug"], project_id)
     if "cover_media_id" in values:
         ensure_media_exists(db, values["cover_media_id"])
+    _stringify_urls(values, "demo_url")
     update_model(item, values)
     commit_or_raise(db, "A project with this slug already exists")
     db.refresh(item)
@@ -295,6 +312,11 @@ def publish_project(
 )
 def delete_project(project_id: UUID, db: Session = Depends(get_db)) -> None:
     item = get_or_404(db, Project, project_id, "Project")
+    db.execute(
+        update(ResearchArea)
+        .where(ResearchArea.representative_project_id == project_id)
+        .values(representative_project_id=None)
+    )
     db.delete(item)
     commit_or_raise(db)
 
@@ -306,12 +328,22 @@ def list_admin_research_areas(
     page_size: int = Query(default=50, ge=1, le=100),
     db: Session = Depends(get_db),
 ) -> dict[str, object]:
-    query = select(ResearchArea).order_by(
-        ResearchArea.sort_order.asc(), ResearchArea.id.asc()
+    query = (
+        select(ResearchArea)
+        .order_by(ResearchArea.sort_order.asc(), ResearchArea.id.asc())
+        .options(
+            joinedload(ResearchArea.representative_project).joinedload(
+                Project.cover_media
+            )
+        )
     )
     items, total, pages = page_query(db, query, page, page_size)
     return _page_response(
-        [research_area_admin(item) for item in items], page, page_size, total, pages
+        [research_area_admin(item, request) for item in items],
+        page,
+        page_size,
+        total,
+        pages,
     )
 
 
@@ -321,9 +353,12 @@ def list_admin_research_areas(
     responses={404: {"model": ErrorResponse}},
 )
 def get_admin_research_area(
-    area_id: UUID, db: Session = Depends(get_db)
+    area_id: UUID, request: Request, db: Session = Depends(get_db)
 ) -> ResearchAreaAdmin:
-    return research_area_admin(get_or_404(db, ResearchArea, area_id, "Research area"))
+    item = db.scalar(_research_area_query().where(ResearchArea.id == area_id))
+    if item is None:
+        raise AppError(404, "not_found", "Research area was not found")
+    return research_area_admin(item, request)
 
 
 @router.post(
@@ -332,14 +367,17 @@ def get_admin_research_area(
     status_code=status.HTTP_201_CREATED,
 )
 def create_research_area(
-    payload: ResearchAreaCreate, db: Session = Depends(get_db)
+    payload: ResearchAreaCreate,
+    request: Request,
+    db: Session = Depends(get_db),
 ) -> ResearchAreaAdmin:
     _ensure_unique_slug(db, ResearchArea, payload.slug)
+    ensure_project_exists(db, payload.representative_project_id)
     item = ResearchArea(**payload.model_dump())
     db.add(item)
     commit_or_raise(db, "A research area with this slug already exists")
     db.refresh(item)
-    return research_area_admin(item)
+    return research_area_admin(item, request)
 
 
 @router.patch(
@@ -350,16 +388,19 @@ def create_research_area(
 def update_research_area(
     area_id: UUID,
     payload: ResearchAreaUpdate,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> ResearchAreaAdmin:
     item = get_or_404(db, ResearchArea, area_id, "Research area")
     values = payload.model_dump(exclude_unset=True)
     if "slug" in values:
         _ensure_unique_slug(db, ResearchArea, values["slug"], area_id)
+    if "representative_project_id" in values:
+        ensure_project_exists(db, values["representative_project_id"])
     update_model(item, values)
     commit_or_raise(db, "A research area with this slug already exists")
     db.refresh(item)
-    return research_area_admin(item)
+    return research_area_admin(item, request)
 
 
 @router.delete(
@@ -608,6 +649,7 @@ def _update_site_settings(
     values = payload.model_dump(exclude_unset=True)
     if "logo_media_id" in values:
         ensure_media_exists(db, values["logo_media_id"])
+    _stringify_urls(values, "papers_url", "join_url", "cooperation_url")
     update_model(item, values)
     commit_or_raise(db)
     db.refresh(item)

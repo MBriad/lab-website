@@ -9,6 +9,7 @@ from sqlalchemy import (
     Enum as SqlEnum,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     Uuid,
@@ -115,6 +116,7 @@ class Project(TimestampMixin, Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
+    demo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     cover_media_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("media.id", ondelete="RESTRICT"), nullable=True
     )
@@ -125,6 +127,11 @@ class Project(TimestampMixin, Base):
     )
     cover_media: Mapped[Media | None] = relationship(
         "Media", foreign_keys=[cover_media_id]
+    )
+    research_areas: Mapped[list["ResearchArea"]] = relationship(
+        "ResearchArea",
+        foreign_keys="ResearchArea.representative_project_id",
+        back_populates="representative_project",
     )
 
 
@@ -139,8 +146,22 @@ class ResearchArea(TimestampMixin, Base):
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
+    problem_statement: Mapped[str | None] = mapped_column(Text, nullable=True)
+    application_scenarios: Mapped[list[str]] = mapped_column(
+        JSON, default=list, nullable=False
+    )
+    representative_project_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("projects.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     is_visible: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    representative_project: Mapped[Project | None] = relationship(
+        "Project",
+        foreign_keys=[representative_project_id],
+        back_populates="research_areas",
+    )
 
 
 class Award(TimestampMixin, Base):
@@ -209,6 +230,23 @@ class SiteSettings(TimestampMixin, Base):
     address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     hero_title: Mapped[str | None] = mapped_column(String(255), nullable=True)
     hero_subtitle: Mapped[str | None] = mapped_column(Text, nullable=True)
+    lab_positioning: Mapped[str | None] = mapped_column(Text, nullable=True)
+    founded_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    founding_background: Mapped[str | None] = mapped_column(Text, nullable=True)
+    core_platforms: Mapped[list[str]] = mapped_column(
+        JSON, default=list, nullable=False
+    )
+    paper_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    patent_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    active_project_count: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False
+    )
+    trained_student_count: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False
+    )
+    papers_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    join_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    cooperation_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     logo_media_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("media.id", ondelete="RESTRICT"), nullable=True
     )

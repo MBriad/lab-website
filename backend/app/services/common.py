@@ -44,6 +44,19 @@ def ensure_media_exists(db: Session, media_id: object | None) -> None:
         )
 
 
+def ensure_project_exists(db: Session, project_id: object | None) -> None:
+    if project_id is None:
+        return
+    from app.models import Project
+
+    if db.get(Project, project_id) is None:
+        raise AppError(
+            422,
+            "invalid_project_reference",
+            "Referenced project does not exist",
+        )
+
+
 def get_or_404(db: Session, model: type[T], identifier: object, resource: str) -> T:
     item = db.get(model, identifier)
     if item is None:

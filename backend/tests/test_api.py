@@ -1,4 +1,5 @@
 from io import BytesIO
+from uuid import uuid4
 
 from PIL import Image
 
@@ -178,3 +179,133 @@ def test_admin_content_and_settings_workflows(client, session_factory):
     )
     assert updated.status_code == 200, updated.text
     assert client.get("/api/v1/site-settings").json()["site_title"] == "Robotics Lab"
+
+
+def test_homepage_settings_and_content_extensions(client, session_factory):
+    token = login(client, session_factory)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    settings_payload = {
+        "lab_positioning": "A university robotics research and engineering lab.",
+        "founded_year": 2018,
+        "founding_background": "Built around field robotics research.",
+        "core_platforms": ["Mobile robots", "Vision testbed"],
+        "paper_count": 12,
+        "patent_count": 5,
+        "active_project_count": 3,
+        "trained_student_count": 28,
+        "papers_url": "https://example.com/papers",
+        "join_url": "https://example.com/join",
+        "cooperation_url": "https://example.com/cooperate",
+    }
+    updated_settings = client.patch(
+        "/api/v1/admin/site-settings", headers=headers, json=settings_payload
+    )
+    assert updated_settings.status_code == 200, updated_settings.text
+    settings = updated_settings.json()
+    assert settings["lab_positioning"] == settings_payload["lab_positioning"]
+    assert settings["founded_year"] == 2018
+    assert settings["core_platforms"] == ["Mobile robots", "Vision testbed"]
+    assert settings["paper_count"] == 12
+    assert settings["papers_url"] == settings_payload["papers_url"]
+    public_settings = client.get("/api/v1/site-settings")
+    assert public_settings.status_code == 200
+    assert public_settings.json()["trained_student_count"] == 28
+
+    invalid_settings = (
+        {"paper_count": -1},
+        {"founded_year": 1799},
+        {"core_platforms": ["  "]},
+        {"core_platforms": ["platform"] * 9},
+        {"papers_url": "ftp://example.com/papers"},
+    )
+    for payload in invalid_settings:
+        response = client.patch(
+            "/api/v1/admin/site-settings", headers=headers, json=payload
+        )
+        assert response.status_code == 422, response.text
+        assert response.json()["error"]["code"] == "validation_error"
+
+    project = client.post(
+        "/api/v1/admin/projects",
+        headers=headers,
+        json={
+            "slug": "homepage-demo",
+            "title": "Homepage demo",
+            "summary": "A public project summary.",
+            "description": "A project used to verify the homepage contract.",
+            "demo_url": "https://example.com/demo",
+            "is_visible": True,
+        },
+    )
+    assert project.status_code == 201, project.text
+    project_data = project.json()
+    assert project_data["demo_url"] == "https://example.com/demo"
+    assert client.get("/api/v1/projects/homepage-demo").json()["demo_url"] == (
+        "https://example.com/demo"
+    )
+    invalid_project = client.post(
+        "/api/v1/admin/projects",
+        headers=headers,
+        json={
+            "slug": "invalid-demo",
+            "title": "Invalid demo",
+            "description": "Invalid demo URL.",
+            "demo_url": "ftp://example.com/demo",
+        },
+    )
+    assert invalid_project.status_code == 422
+
+    area = client.post(
+        "/api/v1/admin/research-areas",
+        headers=headers,
+        json={
+            "slug": "field-robotics",
+            "title": "Field robotics",
+            "description": "Robots operating in unstructured environments.",
+            "problem_statement": "How can robots remain reliable outside the lab?",
+            "application_scenarios": ["Inspection", "Rescue"],
+            "representative_project_id": project_data["id"],
+            "is_visible": True,
+        },
+    )
+    assert area.status_code == 201, area.text
+    area_data = area.json()
+    assert area_data["representative_project_id"] == project_data["id"]
+    assert area_data["representative_project"]["slug"] == "homepage-demo"
+    public_area = client.get("/api/v1/research-areas")
+    assert public_area.status_code == 200
+    public_area_data = public_area.json()["items"][0]
+    assert public_area_data["application_scenarios"] == ["Inspection", "Rescue"]
+    assert public_area_data["representative_project"]["demo_url"] == (
+        "https://example.com/demo"
+    )
+
+    invalid_reference = client.post(
+        "/api/v1/admin/research-areas",
+        headers=headers,
+        json={
+            "slug": "invalid-reference",
+            "title": "Invalid reference",
+            "description": "This should fail.",
+            "representative_project_id": str(uuid4()),
+        },
+    )
+    assert invalid_reference.status_code == 422
+    assert invalid_reference.json()["error"]["code"] == "invalid_project_reference"
+
+    deleted = client.delete(
+        f"/api/v1/admin/projects/{project_data['id']}", headers=headers
+    )
+    assert deleted.status_code == 204, deleted.text
+    admin_area = client.get(
+        f"/api/v1/admin/research-areas/{area_data['id']}", headers=headers
+    )
+    assert admin_area.status_code == 200
+    assert admin_area.json()["representative_project_id"] is None
+    assert (
+        client.get("/api/v1/research-areas").json()["items"][0][
+            "representative_project"
+        ]
+        is None
+    )

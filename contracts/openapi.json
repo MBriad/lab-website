@@ -1534,6 +1534,21 @@
             "title": "Created At",
             "type": "string"
           },
+          "demo_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Demo Url"
+          },
           "description": {
             "title": "Description",
             "type": "string"
@@ -1594,6 +1609,7 @@
           "title",
           "summary",
           "description",
+          "demo_url",
           "cover",
           "sort_order",
           "published_at",
@@ -1619,6 +1635,21 @@
               }
             ],
             "title": "Cover Media Id"
+          },
+          "demo_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Demo Url"
           },
           "description": {
             "minLength": 1,
@@ -1698,6 +1729,21 @@
             "title": "Created At",
             "type": "string"
           },
+          "demo_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Demo Url"
+          },
           "description": {
             "title": "Description",
             "type": "string"
@@ -1754,6 +1800,7 @@
           "title",
           "summary",
           "description",
+          "demo_url",
           "cover",
           "sort_order",
           "published_at",
@@ -1761,6 +1808,69 @@
           "updated_at"
         ],
         "title": "ProjectPublic",
+        "type": "object"
+      },
+      "ProjectReferencePublic": {
+        "properties": {
+          "cover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MediaPublic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "demo_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Demo Url"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "summary",
+          "cover",
+          "demo_url"
+        ],
+        "title": "ProjectReferencePublic",
         "type": "object"
       },
       "ProjectUpdate": {
@@ -1777,6 +1887,21 @@
               }
             ],
             "title": "Cover Media Id"
+          },
+          "demo_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Demo Url"
           },
           "description": {
             "anyOf": [
@@ -1869,6 +1994,16 @@
       },
       "ResearchAreaAdmin": {
         "properties": {
+          "application_scenarios": {
+            "items": {
+              "maxLength": 160,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Application Scenarios",
+            "type": "array"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -1886,6 +2021,39 @@
           "is_visible": {
             "title": "Is Visible",
             "type": "boolean"
+          },
+          "problem_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem Statement"
+          },
+          "representative_project": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProjectReferencePublic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "representative_project_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Representative Project Id"
           },
           "slug": {
             "title": "Slug",
@@ -1910,9 +2078,13 @@
           "slug",
           "title",
           "description",
+          "problem_statement",
+          "application_scenarios",
+          "representative_project",
           "sort_order",
           "created_at",
           "updated_at",
+          "representative_project_id",
           "is_visible"
         ],
         "title": "ResearchAreaAdmin",
@@ -1921,6 +2093,16 @@
       "ResearchAreaCreate": {
         "additionalProperties": false,
         "properties": {
+          "application_scenarios": {
+            "items": {
+              "maxLength": 160,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Application Scenarios",
+            "type": "array"
+          },
           "description": {
             "minLength": 1,
             "title": "Description",
@@ -1930,6 +2112,29 @@
             "default": false,
             "title": "Is Visible",
             "type": "boolean"
+          },
+          "problem_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem Statement"
+          },
+          "representative_project_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Representative Project Id"
           },
           "slug": {
             "maxLength": 160,
@@ -1960,6 +2165,16 @@
       },
       "ResearchAreaPublic": {
         "properties": {
+          "application_scenarios": {
+            "items": {
+              "maxLength": 160,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Application Scenarios",
+            "type": "array"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -1973,6 +2188,27 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "problem_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem Statement"
+          },
+          "representative_project": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProjectReferencePublic"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "slug": {
             "title": "Slug",
@@ -1997,6 +2233,9 @@
           "slug",
           "title",
           "description",
+          "problem_statement",
+          "application_scenarios",
+          "representative_project",
           "sort_order",
           "created_at",
           "updated_at"
@@ -2007,6 +2246,16 @@
       "ResearchAreaUpdate": {
         "additionalProperties": false,
         "properties": {
+          "application_scenarios": {
+            "items": {
+              "maxLength": 160,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Application Scenarios",
+            "type": "array"
+          },
           "description": {
             "anyOf": [
               {
@@ -2029,6 +2278,29 @@
               }
             ],
             "title": "Is Visible"
+          },
+          "problem_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem Statement"
+          },
+          "representative_project_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Representative Project Id"
           },
           "slug": {
             "anyOf": [
@@ -2074,6 +2346,11 @@
       },
       "SiteSettingsAdmin": {
         "properties": {
+          "active_project_count": {
+            "minimum": 0.0,
+            "title": "Active Project Count",
+            "type": "integer"
+          },
           "address": {
             "anyOf": [
               {
@@ -2108,6 +2385,31 @@
             ],
             "title": "Contact Phone"
           },
+          "cooperation_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cooperation Url"
+          },
+          "core_platforms": {
+            "items": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Core Platforms",
+            "type": "array"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -2123,6 +2425,28 @@
               }
             ],
             "title": "Description"
+          },
+          "founded_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Founded Year"
+          },
+          "founding_background": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Founding Background"
           },
           "hero_subtitle": {
             "anyOf": [
@@ -2146,6 +2470,21 @@
             ],
             "title": "Hero Title"
           },
+          "join_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Join Url"
+          },
           "key": {
             "title": "Key",
             "type": "string"
@@ -2153,6 +2492,17 @@
           "lab_name": {
             "title": "Lab Name",
             "type": "string"
+          },
+          "lab_positioning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Positioning"
           },
           "logo": {
             "anyOf": [
@@ -2176,6 +2526,31 @@
             ],
             "title": "Logo Media Id"
           },
+          "paper_count": {
+            "minimum": 0.0,
+            "title": "Paper Count",
+            "type": "integer"
+          },
+          "papers_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Papers Url"
+          },
+          "patent_count": {
+            "minimum": 0.0,
+            "title": "Patent Count",
+            "type": "integer"
+          },
           "site_title": {
             "title": "Site Title",
             "type": "string"
@@ -2225,6 +2600,11 @@
             ],
             "title": "Tagline"
           },
+          "trained_student_count": {
+            "minimum": 0.0,
+            "title": "Trained Student Count",
+            "type": "integer"
+          },
           "updated_at": {
             "format": "date-time",
             "title": "Updated At",
@@ -2242,6 +2622,17 @@
           "address",
           "hero_title",
           "hero_subtitle",
+          "lab_positioning",
+          "founded_year",
+          "founding_background",
+          "core_platforms",
+          "paper_count",
+          "patent_count",
+          "active_project_count",
+          "trained_student_count",
+          "papers_url",
+          "join_url",
+          "cooperation_url",
           "logo",
           "social_github",
           "social_bilibili",
@@ -2255,6 +2646,11 @@
       },
       "SiteSettingsPublic": {
         "properties": {
+          "active_project_count": {
+            "minimum": 0.0,
+            "title": "Active Project Count",
+            "type": "integer"
+          },
           "address": {
             "anyOf": [
               {
@@ -2289,6 +2685,31 @@
             ],
             "title": "Contact Phone"
           },
+          "cooperation_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cooperation Url"
+          },
+          "core_platforms": {
+            "items": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Core Platforms",
+            "type": "array"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -2304,6 +2725,28 @@
               }
             ],
             "title": "Description"
+          },
+          "founded_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Founded Year"
+          },
+          "founding_background": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Founding Background"
           },
           "hero_subtitle": {
             "anyOf": [
@@ -2327,6 +2770,21 @@
             ],
             "title": "Hero Title"
           },
+          "join_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Join Url"
+          },
           "key": {
             "title": "Key",
             "type": "string"
@@ -2334,6 +2792,17 @@
           "lab_name": {
             "title": "Lab Name",
             "type": "string"
+          },
+          "lab_positioning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Positioning"
           },
           "logo": {
             "anyOf": [
@@ -2344,6 +2813,31 @@
                 "type": "null"
               }
             ]
+          },
+          "paper_count": {
+            "minimum": 0.0,
+            "title": "Paper Count",
+            "type": "integer"
+          },
+          "papers_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Papers Url"
+          },
+          "patent_count": {
+            "minimum": 0.0,
+            "title": "Patent Count",
+            "type": "integer"
           },
           "site_title": {
             "title": "Site Title",
@@ -2394,6 +2888,11 @@
             ],
             "title": "Tagline"
           },
+          "trained_student_count": {
+            "minimum": 0.0,
+            "title": "Trained Student Count",
+            "type": "integer"
+          },
           "updated_at": {
             "format": "date-time",
             "title": "Updated At",
@@ -2411,6 +2910,17 @@
           "address",
           "hero_title",
           "hero_subtitle",
+          "lab_positioning",
+          "founded_year",
+          "founding_background",
+          "core_platforms",
+          "paper_count",
+          "patent_count",
+          "active_project_count",
+          "trained_student_count",
+          "papers_url",
+          "join_url",
+          "cooperation_url",
           "logo",
           "social_github",
           "social_bilibili",
@@ -2424,6 +2934,11 @@
       "SiteSettingsUpdate": {
         "additionalProperties": false,
         "properties": {
+          "active_project_count": {
+            "minimum": 0.0,
+            "title": "Active Project Count",
+            "type": "integer"
+          },
           "address": {
             "anyOf": [
               {
@@ -2460,6 +2975,31 @@
             ],
             "title": "Contact Phone"
           },
+          "cooperation_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cooperation Url"
+          },
+          "core_platforms": {
+            "items": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Core Platforms",
+            "type": "array"
+          },
           "description": {
             "anyOf": [
               {
@@ -2470,6 +3010,30 @@
               }
             ],
             "title": "Description"
+          },
+          "founded_year": {
+            "anyOf": [
+              {
+                "maximum": 2200.0,
+                "minimum": 1800.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Founded Year"
+          },
+          "founding_background": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Founding Background"
           },
           "hero_subtitle": {
             "anyOf": [
@@ -2494,6 +3058,21 @@
             ],
             "title": "Hero Title"
           },
+          "join_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Join Url"
+          },
           "lab_name": {
             "anyOf": [
               {
@@ -2506,6 +3085,17 @@
             ],
             "title": "Lab Name"
           },
+          "lab_positioning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Positioning"
+          },
           "logo_media_id": {
             "anyOf": [
               {
@@ -2517,6 +3107,31 @@
               }
             ],
             "title": "Logo Media Id"
+          },
+          "paper_count": {
+            "minimum": 0.0,
+            "title": "Paper Count",
+            "type": "integer"
+          },
+          "papers_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 500,
+                "minLength": 1,
+                "pattern": "^https?://",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Papers Url"
+          },
+          "patent_count": {
+            "minimum": 0.0,
+            "title": "Patent Count",
+            "type": "integer"
           },
           "site_title": {
             "anyOf": [
@@ -2577,6 +3192,11 @@
               }
             ],
             "title": "Tagline"
+          },
+          "trained_student_count": {
+            "minimum": 0.0,
+            "title": "Trained Student Count",
+            "type": "integer"
           }
         },
         "title": "SiteSettingsUpdate",
