@@ -15,6 +15,7 @@ import { Notice, useNotice } from "@/components/admin/ui/notice";
 import { Pager } from "@/components/admin/ui/pager";
 import { Table, Td, Th } from "@/components/admin/ui/table";
 import { useAdminList } from "@/components/admin/lib/use-admin-list";
+import { moveAdminRow } from "@/components/admin/lib/move-admin-row";
 import {
   describeApiError,
   isAuthError,
@@ -78,6 +79,18 @@ export function ProjectList() {
     );
   };
 
+  // Swap `sort_order` with the adjacent row on the current page; boundary
+  // rows render their outward control disabled.
+  const handleMove = (item: ProjectAdmin, index: number, direction: -1 | 1) => {
+    const neighbor = list.result?.items[index + direction];
+    if (!neighbor) return;
+    void runMutation(
+      item.id,
+      () => moveAdminRow(item, neighbor, api.updateProject),
+      "顺序已更新。",
+    );
+  };
+
   return (
     <div className="space-y-5">
       <AdminPageHeader
@@ -113,7 +126,7 @@ export function ProjectList() {
               </tr>
             </thead>
             <tbody>
-              {list.result.items.map((item) => (
+              {list.result.items.map((item, index, items) => (
                 <tr key={item.id}>
                   <Td>
                     <MediaImage
@@ -147,7 +160,38 @@ export function ProjectList() {
                       ) : null}
                     </div>
                   </Td>
-                  <Td className="font-mono text-ink-muted">{item.sort_order}</Td>
+                  <Td>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-ink-muted">
+                        {item.sort_order}
+                      </span>
+                      <span className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 px-0"
+                          aria-label="上移"
+                          disabled={index === 0 || busyId === item.id}
+                          onClick={() => handleMove(item, index, -1)}
+                        >
+                          <span aria-hidden>↑</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 px-0"
+                          aria-label="下移"
+                          disabled={
+                            index === items.length - 1 ||
+                            busyId === item.id
+                          }
+                          onClick={() => handleMove(item, index, 1)}
+                        >
+                          <span aria-hidden>↓</span>
+                        </Button>
+                      </span>
+                    </div>
+                  </Td>
                   <Td className="whitespace-nowrap text-ink-muted">
                     {formatDate(item.updated_at)}
                   </Td>
