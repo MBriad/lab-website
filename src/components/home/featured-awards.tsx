@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { InteractiveMedia } from "@/components/motion/interactive-media";
 import { Reveal } from "@/components/motion/reveal";
 import { useHorizontalRail } from "@/components/motion/use-horizontal-rail";
 import { CategoryTag, LevelBadge } from "@/components/ui/badges";
@@ -45,7 +46,11 @@ function RailCard({ award }: RailCardProps) {
       href="/awards"
       className="group glass-panel-strong flex h-full min-h-[28rem] flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-accent"
     >
-      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden border-b border-hairline bg-white/34">
+      <InteractiveMedia
+        maxTiltDeg={3.2}
+        maxShiftPx={3}
+        className="relative aspect-[16/10] w-full shrink-0 border border-hairline bg-white/34"
+      >
         {media.media ? (
           <MediaImage
             media={media.media}
@@ -54,10 +59,11 @@ function RailCard({ award }: RailCardProps) {
             className="h-full w-full"
             sizes="(min-width: 1024px) 42vw, 88vw"
             imgClassName={cn(
-              "transition-transform duration-700 group-hover:scale-[1.035]",
-              // MediaImage defaults to object-cover; keep the full certificate
-              // visible so portrait certificates are never cropped in the rail.
-              media.certificate ? "!object-contain bg-white/44 p-8" : "object-cover",
+              "object-cover transition-transform duration-700 group-hover:scale-[1.035]",
+              // Uploaded certificates often contain a generous white photo
+              // margin. A restrained crop keeps the artwork legible and lets
+              // the framed image fill the rail consistently.
+              media.certificate ? "scale-[1.12] group-hover:scale-[1.15]" : null,
             )}
           />
         ) : (
@@ -71,10 +77,10 @@ function RailCard({ award }: RailCardProps) {
             </div>
           </div>
         )}
-        <span className="absolute top-4 left-4 rounded-full border border-white/80 bg-white/72 px-3 py-1 font-mono text-[10px] tracking-[0.22em] text-ink-muted uppercase backdrop-blur-md">
+        <span className="absolute top-4 left-4 z-10 rounded-full border border-white/80 bg-white/72 px-3 py-1 font-mono text-[10px] tracking-[0.22em] text-ink-muted uppercase backdrop-blur-md">
           {media.label}
         </span>
-      </div>
+      </InteractiveMedia>
 
       <span className="flex flex-1 flex-col p-6 sm:p-7">
         <span className="flex flex-wrap items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-ink-faint uppercase">
@@ -150,7 +156,7 @@ export function FeaturedAwards({ awards }: FeaturedAwardsProps) {
             role="region"
             aria-label="精选荣誉横向浏览"
             onKeyDown={onRailKeyDown}
-            className="public-rail mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain pb-5 outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:gap-6"
+            className="public-rail mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-5 outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:gap-6"
           >
             {awards.map((award, i) => (
               <Reveal

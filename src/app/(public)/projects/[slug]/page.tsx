@@ -4,12 +4,13 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { MediaImage } from "@/components/ui/media-image";
 import { Paragraphs } from "@/components/ui/paragraphs";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, getApiMode } from "@/lib/api";
 import { formatDateCN } from "@/lib/format";
 import type { ProjectPublic } from "@/lib/types/api";
 
 /** Prerender known project pages at build (mock mode); degrade gracefully. */
 export async function generateStaticParams() {
+  if (getApiMode() !== "mock") return [];
   try {
     const result = await api.listProjects({ page: 1, page_size: 50 });
     return result.items.map((project) => ({ slug: project.slug }));

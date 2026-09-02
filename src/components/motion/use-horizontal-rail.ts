@@ -105,9 +105,22 @@ export function useHorizontalRail(): UseHorizontalRailResult {
     const max = Math.max(0, rail.scrollWidth - rail.clientWidth);
     const amount = Math.max(rail.clientWidth * 0.78, 280);
     const target = Math.max(0, Math.min(max, rail.scrollLeft + amount * direction));
-    rail.scrollTo({
-      left: target,
+    const cards = Array.from(rail.children).filter(
+      (child): child is HTMLElement => child instanceof HTMLElement,
+    );
+    const targetCard = cards.reduce<HTMLElement | null>((closest, card) => {
+      if (!closest) return card;
+      return Math.abs(card.offsetLeft - target) < Math.abs(closest.offsetLeft - target)
+        ? card
+        : closest;
+    }, null);
+    // Let the browser bring a real snap item into view. This works where an
+    // embedded web surface ignores direct overflow assignment, and preserves
+    // ordinary native touch / trackpad scrolling for the rail itself.
+    targetCard?.scrollIntoView({
       behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "nearest",
+      inline: "start",
     });
     // Give the user immediate feedback while a smooth scroll is in flight;
     // the scroll listener will refine the final boundary state afterward.
@@ -126,20 +139,14 @@ export function useHorizontalRail(): UseHorizontalRailResult {
         event.preventDefault();
         const rail = railRef.current;
         if (rail) {
-          rail.scrollTo({
-            left: 0,
-            behavior: prefersReducedMotion() ? "auto" : "smooth",
-          });
+          rail.scrollLeft = 0;
           setControls((current) => ({ ...current, previous: false }));
         }
       } else if (event.key === "End") {
         event.preventDefault();
         const rail = railRef.current;
         if (rail) {
-          rail.scrollTo({
-            left: rail.scrollWidth,
-            behavior: prefersReducedMotion() ? "auto" : "smooth",
-          });
+          rail.scrollLeft = rail.scrollWidth;
           setControls((current) => ({ ...current, previous: true, next: false }));
         }
       }

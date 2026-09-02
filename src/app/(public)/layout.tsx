@@ -34,7 +34,7 @@ export default async function PublicLayout({
         跳到主要内容
       </a>
       <ScrollProgress />
-      <Navbar labName={settings?.lab_name ?? "星航机器人实验室"} />
+      <Navbar labName={settings?.lab_name ?? "星航机器人实验室"} logo={settings?.logo} />
       <main id="main-content" className="flex-1">
         {children}
       </main>

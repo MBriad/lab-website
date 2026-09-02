@@ -2,7 +2,6 @@ import { Reveal } from "@/components/motion/reveal";
 import { Container } from "@/components/ui/container";
 import { Paragraphs } from "@/components/ui/paragraphs";
 import { SectionHeader } from "@/components/ui/section-header";
-import { MetricsStrip, type MetricItem } from "./metrics-strip";
 import type { SiteSettingsPublic } from "@/lib/types/api";
 
 export interface LabAuthorityProps {
@@ -10,23 +9,16 @@ export interface LabAuthorityProps {
 }
 
 export function LabAuthority({ settings }: LabAuthorityProps) {
-  const metrics: MetricItem[] = [
-    { label: "论文", value: settings.paper_count },
-    { label: "专利", value: settings.patent_count },
-    { label: "在研项目", value: settings.active_project_count },
-    { label: "训练学生", value: settings.trained_student_count },
-  ];
   const hasAuthority = Boolean(
     settings.lab_positioning ||
     settings.founded_year ||
     settings.founding_background ||
     settings.core_platforms.length,
   );
-  const hasMetrics = metrics.some((metric) => metric.value > 0);
   const sectionCode = hasAuthority ? "AUTHORITY" : "ABOUT";
   const sectionTitle = hasAuthority ? "实验室定位" : "实验室简介";
 
-  if (!hasAuthority && !hasMetrics && !settings.description) return null;
+  if (!hasAuthority && !settings.description) return null;
 
   return (
     <section id="about" className="section-pad border-t border-hairline">
@@ -77,7 +69,6 @@ export function LabAuthority({ settings }: LabAuthorityProps) {
             ) : null}
           </div>
         </div>
-        {hasMetrics ? <MetricsStrip metrics={metrics} /> : null}
       </Container>
     </section>
   );

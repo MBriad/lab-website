@@ -10,8 +10,8 @@ import { Field } from "./ui/field";
 import { Input } from "./ui/input";
 
 /**
- * `/admin/login` card. Shows the mock credentials only outside real API mode
- * (dev convenience; never rendered against the production backend).
+ * `/admin/login` card. Shows fixture credentials only in explicitly enabled
+ * mock mode (dev convenience; never rendered against the production backend).
  */
 export function LoginForm() {
   const router = useRouter();
@@ -98,7 +98,7 @@ export function LoginForm() {
             </Button>
           </form>
 
-          {getApiMode() !== "real" ? (
+          {getApiMode() === "mock" ? (
             <p className="mt-4 rounded-hud border border-hairline bg-surface-2/60 px-3 py-2 font-mono text-xs text-ink-faint">
               演示模式（mock）：admin / admin123
             </p>

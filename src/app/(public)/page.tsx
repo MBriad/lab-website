@@ -39,7 +39,10 @@ export default async function HomePage() {
   if (!home) {
     return (
       <Container className="section-pad pt-32">
-        <ErrorNote title="首页数据加载失败" />
+        <ErrorNote
+          title="首页数据加载失败"
+          message="当前默认连接真实 CMS；本地开发请先启动 backend 服务，或显式启用 mock 模式。"
+        />
       </Container>
     );
   }

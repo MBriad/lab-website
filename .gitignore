@@ -32,8 +32,9 @@ yarn-error.log*
 __pycache__/
 *.py[cod]
 
-# env files (can opt-in for committing if needed)
+# env files (the documented example is safe and intentionally tracked)
 .env*
+!.env.example
 
 # vercel
 .vercel

@@ -95,6 +95,7 @@ describe("request wiring", () => {
       "http://127.0.0.1:8000/api/v1/awards?featured=true&sort=date_desc&page=2",
     );
     expect(init?.method).toBe("GET");
+    expect(init?.cache).toBe("no-store");
     expect((init?.headers as Record<string, string>).Authorization).toBeUndefined();
   });
 

@@ -3,50 +3,40 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useMotionPrefs } from "@/components/motion/motion-prefs";
+import { MediaImage } from "@/components/ui/media-image";
 import { cn } from "@/lib/cn";
+import type { MediaPublic } from "@/lib/types/api";
 import { NAV_LINKS, isNavActive } from "./nav-links";
 
 export interface NavbarProps {
   /** `lab_name` from site settings (falls back to a static label upstream). */
   labName: string;
+  /** Configured laboratory mark, when available. */
+  logo?: MediaPublic | null;
 }
 
 /**
  * Fixed public navbar.
  *
  * - Translucent + blur after scrolling past the hero edge.
- * - Restrained hide-on-scroll-down / show-on-scroll-up, only when motion is
- *   allowed (reduced-motion users keep the bar docked).
+ * - Remains visible during scrolling so the site routes are always available.
  * - Active route highlighting via `usePathname`.
  * - Mobile: full-screen overlay with staggered link entrances; scroll is
  *   locked while open and Escape closes it.
  * Scroll bookkeeping runs inside rAF and only flips discrete booleans —
  * never per-frame React state. All listeners/rAF are cleaned up.
  */
-export function Navbar({ labName }: NavbarProps) {
+export function Navbar({ labName, logo = null }: NavbarProps) {
   const pathname = usePathname();
-  const { animate } = useMotionPrefs();
   const [scrolled, setScrolled] = useState(false);
-  const [docked, setDocked] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    let lastY = window.scrollY;
     let raf = 0;
 
     const update = () => {
       raf = 0;
-      const y = window.scrollY;
-      setScrolled(y > 8);
-      if (!animate) {
-        setDocked(false);
-        lastY = y;
-        return;
-      }
-      if (y > lastY + 4 && y > 360) setDocked(true);
-      else if (y < lastY - 4) setDocked(false);
-      lastY = y;
+      setScrolled(window.scrollY > 8);
     };
 
     const onScroll = () => {
@@ -59,7 +49,7 @@ export function Navbar({ labName }: NavbarProps) {
       window.removeEventListener("scroll", onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [animate]);
+  }, []);
 
   // Close the mobile menu whenever the route changes (deferred to a timer
   // callback: direct synchronous setState inside an effect body is a
@@ -93,7 +83,7 @@ export function Navbar({ labName }: NavbarProps) {
           scrolled
             ? "border-b border-hairline bg-white/66 shadow-[0_8px_30px_rgba(112,132,205,0.09)] backdrop-blur-xl"
             : "border-b border-transparent",
-          docked && !open ? "-translate-y-full" : "translate-y-0",
+          "translate-y-0",
         )}
       >
         <nav
@@ -101,11 +91,23 @@ export function Navbar({ labName }: NavbarProps) {
           className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
         >
           <Link href="/" className="flex items-center gap-3" aria-label={`${labName} 首页`}>
-            <span aria-hidden className="relative grid h-9 w-9 place-items-center rounded-[13px] border border-white/80 bg-linear-to-br from-accent/20 via-white/60 to-signal/20 shadow-[0_8px_20px_rgba(113,148,255,0.14)]">
-              <span className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-accent/70" />
-              <span className="absolute right-1.5 bottom-1.5 h-1.5 w-1.5 rounded-full bg-signal/75" />
-              <span className="h-2.5 w-2.5 rotate-45 rounded-[3px] bg-linear-to-br from-accent to-signal shadow-glow-accent" />
-            </span>
+            {logo ? (
+              <MediaImage
+                media={logo}
+                alt={`${labName} 标志`}
+                mode="cover"
+                className="h-9 w-9 shrink-0 rounded-[13px] border border-white/80 bg-white/75 p-1 shadow-[0_8px_20px_rgba(113,148,255,0.14)]"
+                sizes="36px"
+                priority
+                imgClassName="object-contain"
+              />
+            ) : (
+              <span aria-hidden className="relative grid h-9 w-9 place-items-center rounded-[13px] border border-white/80 bg-linear-to-br from-accent/20 via-white/60 to-signal/20 shadow-[0_8px_20px_rgba(113,148,255,0.14)]">
+                <span className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-accent/70" />
+                <span className="absolute right-1.5 bottom-1.5 h-1.5 w-1.5 rounded-full bg-signal/75" />
+                <span className="h-2.5 w-2.5 rotate-45 rounded-[3px] bg-linear-to-br from-accent to-signal shadow-glow-accent" />
+              </span>
+            )}
             <span className="flex flex-col leading-none">
               <span className="font-display text-sm font-semibold tracking-wide">
                 {labName}

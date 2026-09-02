@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InteractiveMedia } from "@/components/motion/interactive-media";
 import { Reveal } from "@/components/motion/reveal";
 import { Container } from "@/components/ui/container";
 import { MediaImage } from "@/components/ui/media-image";
@@ -29,14 +30,20 @@ export function LatestNews({ news }: LatestNewsProps) {
                   className="glass-panel-strong group flex h-full flex-col overflow-hidden transition-[border-color,box-shadow] duration-500 hover:border-accent/40 hover:shadow-glow-accent"
                 >
                   {item.cover ? (
-                    <MediaImage
-                      media={item.cover}
-                      alt={item.title}
-                      mode="cover"
+                    <InteractiveMedia
+                      maxTiltDeg={3.8}
+                      maxShiftPx={3}
                       className="aspect-video w-full border-b border-hairline bg-white/34"
-                      sizes="(min-width: 768px) 33vw, 100vw"
-                      imgClassName="transition-transform duration-500 group-hover:scale-[1.04]"
-                    />
+                    >
+                      <MediaImage
+                        media={item.cover}
+                        alt={item.title}
+                        mode="cover"
+                        className="h-full w-full"
+                        sizes="(min-width: 768px) 33vw, 100vw"
+                        imgClassName="object-cover"
+                      />
+                    </InteractiveMedia>
                   ) : null}
                   <span className="flex flex-1 flex-col p-5">
                     <span className="font-mono text-[10px] tracking-[0.25em] text-ink-faint uppercase">

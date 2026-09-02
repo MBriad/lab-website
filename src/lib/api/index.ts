@@ -6,8 +6,9 @@ import { createMockApiClient } from "./mock/client";
  * Data-layer entry point.
  *
  * `NEXT_PUBLIC_API_MODE` selects the implementation:
- * - `"mock"` (default): deterministic fixtures, no backend needed.
- * - `"real"`: HTTP against `/api/v1` (proxied to BACKEND_ORIGIN by Next).
+ * - `"mock"`: deterministic fixtures, enabled only when explicitly requested.
+ * - unset, `"real"`, or any other value: HTTP against `/api/v1`
+ *   (proxied to BACKEND_ORIGIN by Next).
  *
  * Pages/components import { api } from "@/lib/api" and depend only on the
  * `ApiClient` interface — the switch is a one-line env change.
@@ -16,7 +17,7 @@ import { createMockApiClient } from "./mock/client";
 export type ApiMode = "mock" | "real";
 
 export function getApiMode(): ApiMode {
-  return process.env.NEXT_PUBLIC_API_MODE === "real" ? "real" : "mock";
+  return process.env.NEXT_PUBLIC_API_MODE === "mock" ? "mock" : "real";
 }
 
 /**
@@ -26,13 +27,14 @@ export function getApiMode(): ApiMode {
  * static string literal, so pages always declare `dynamic = "auto"` and the
  * mode-dependent behavior is implemented in the data layer instead:
  *
- * - mock (default): the mock client performs no network requests, so
- *   `"auto"` keeps build-time static prerendering intact (data baked at
- *   `next build`).
- * - real: `httpRequest` sends every request with `cache: "no-store"`,
+ * - real (default): `httpRequest` sends every request with `cache: "no-store"`,
  *   which opts each data route out of prerendering — pages render per
  *   request against the backend, data is never frozen into static HTML,
  *   and an unreachable backend cannot crash the build.
+ * - explicit mock: the mock client performs no network requests, so
+ *   `"auto"` keeps build-time static prerendering intact (data baked at
+ *   `next build`). Mock instances are intentionally isolated and must not be
+ *   used when admin mutations need to appear in public server components.
  */
 export function isPerRequestRendering(): boolean {
   return getApiMode() === "real";

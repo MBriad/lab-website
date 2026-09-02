@@ -1,6 +1,10 @@
 import Image from "next/image";
 import { cn } from "@/lib/cn";
-import { FALLBACK_IMAGE_HEIGHT, FALLBACK_IMAGE_WIDTH } from "@/lib/media";
+import {
+  FALLBACK_IMAGE_HEIGHT,
+  FALLBACK_IMAGE_WIDTH,
+  mediaUrlForNextImage,
+} from "@/lib/media";
 import type { MediaPublic } from "@/lib/types/api";
 
 export interface MediaImageProps {
@@ -56,11 +60,13 @@ export function MediaImage({
     );
   }
 
+  const imageSrc = mediaUrlForNextImage(media.url);
+
   if (mode === "cover") {
     return (
       <div className={cn("relative overflow-hidden", className)}>
         <Image
-          src={media.url}
+          src={imageSrc}
           alt={alt}
           fill
           sizes={
@@ -78,7 +84,7 @@ export function MediaImage({
   return (
     <div className={cn("overflow-hidden", className)}>
       <Image
-        src={media.url}
+        src={imageSrc}
         alt={alt}
         width={width}
         height={height}

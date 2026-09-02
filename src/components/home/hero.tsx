@@ -1,17 +1,45 @@
+import Image from "next/image";
 import { DeviceOrientationControl } from "@/components/motion/device-orientation-control";
+import { InteractiveMedia } from "@/components/motion/interactive-media";
 import { MagneticButton } from "@/components/motion/magnetic-button";
 import { Starfield } from "@/components/motion/starfield";
-import { TiltCard } from "@/components/motion/tilt-card";
 import { Container } from "@/components/ui/container";
 import { HudLink } from "@/components/ui/hud-link";
 import { MediaImage } from "@/components/ui/media-image";
-import { isoYear } from "@/lib/format";
 import type { MediaPublic, SiteSettingsPublic } from "@/lib/types/api";
 
 export interface HeroProps {
   settings: SiteSettingsPublic;
   heroMedia?: MediaPublic | null;
 }
+
+const toolchain = [
+  {
+    id: "hardware",
+    index: "01",
+    label: "硬件设计",
+    tools: [
+      { icon: "/tool-icons/easyeda.svg", name: "嘉立创 EDA", tone: "easyeda" },
+      { icon: "/tool-icons/altium-designer.svg", name: "Altium Designer", tone: "altium" },
+    ],
+  },
+  {
+    id: "software",
+    index: "02",
+    label: "软件开发",
+    tools: [
+      { icon: "/tool-icons/vscode.svg", name: "VS Code", tone: "vscode" },
+      { icon: "/tool-icons/keil.png", name: "Keil", tone: "keil" },
+      { icon: "/tool-icons/clion.svg", name: "CLion", tone: "clion" },
+    ],
+  },
+  {
+    id: "practice",
+    index: "03",
+    label: "竞赛实践",
+    tools: [{ icon: null, name: "机器人赛事", tone: "competition" }],
+  },
+] as const;
 
 function splitTitle(title: string): { leading: string; emphasis: string | null } {
   const match = title.match(/^(.*?)[，,]\s*(.+)$/);
@@ -26,7 +54,7 @@ function splitTitle(title: string): { leading: string; emphasis: string | null }
  */
 export function Hero({ settings, heroMedia = null }: HeroProps) {
   const title = splitTitle(settings.hero_title ?? settings.lab_name);
-  const est = isoYear(settings.created_at);
+  const est = settings.founded_year;
 
   return (
     <section
@@ -113,42 +141,68 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
           <DeviceOrientationControl />
         </div>
 
-        <TiltCard
+        <InteractiveMedia
           maxTiltDeg={3.6}
           maxShiftPx={5}
           hoverScale={1.008}
+          clip={false}
+          depthClassName="relative"
           className="public-hero-stage relative mt-9 w-full max-w-3xl -rotate-[1.4deg] animate-fade-up sm:mt-11 sm:-rotate-1"
           style={{ animationDelay: "0.58s" }}
         >
           <div className="public-hero-stage-glow" aria-hidden />
           <div className="public-hero-stage-inner">
             {heroMedia ? (
-              <MediaImage
-                media={heroMedia}
-                alt="实验室项目影像"
-                mode="cover"
-                className="h-full w-full"
-                sizes="(min-width: 1280px) 896px, (min-width: 640px) 82vw, 92vw"
-                imgClassName="object-cover"
-                priority
-              />
-            ) : (
-              <div className="public-hero-stage-empty" aria-hidden>
-                <span className="public-hero-stage-empty-ring" />
-                <span className="font-mono text-[10px] tracking-[0.3em] text-ink-faint uppercase">PROJECT VISUAL ARCHIVE</span>
+              <div className="absolute inset-0 opacity-15" aria-hidden>
+                <MediaImage
+                  media={heroMedia}
+                  alt=""
+                  mode="cover"
+                  className="h-full w-full"
+                  sizes="(min-width: 1280px) 896px, (min-width: 640px) 82vw, 92vw"
+                  imgClassName="object-cover grayscale"
+                />
               </div>
-            )}
+            ) : null}
+            <div className="public-hero-brand-visual" aria-label="ROBOLAB 宇航实验室标识">
+              <div className="public-hero-brand-grid" aria-hidden />
+              <div className="public-hero-brand-orbit public-hero-brand-orbit-a" aria-hidden />
+              <div className="public-hero-brand-orbit public-hero-brand-orbit-b" aria-hidden />
+              <div className="public-hero-brand-lockup">
+                <Image
+                  src="/robotlab/robotlab-mark.png"
+                  alt=""
+                  width={500}
+                  height={500}
+                  sizes="clamp(8rem, 20vw, 13rem)"
+                  className="public-hero-brand-mark"
+                  priority
+                />
+                <Image
+                  src="/robotlab/robotlab-wordmark.png"
+                  alt="ROBOLAB 宇航"
+                  width={1007}
+                  height={124}
+                  sizes="(min-width: 640px) 620px, 78vw"
+                  className="public-hero-brand-wordmark"
+                  priority
+                />
+                <div className="public-hero-brand-readout" aria-hidden>
+                  <span>ROBOTICS / MOTION / FIELD</span>
+                  <span>RBL—01 // ONLINE</span>
+                </div>
+              </div>
+            </div>
             <div className="public-hero-stage-sheen" aria-hidden />
             <div className="public-hero-stage-meta">
               <span>LAB / VISUAL FIELD</span>
-              <span>{heroMedia ? "PROJECT COVER" : "MEDIA PENDING"}</span>
+              <span>ROBOTLAB IDENTITY</span>
             </div>
           </div>
-        </TiltCard>
+        </InteractiveMedia>
 
         <div
-          aria-hidden
-          className="public-hero-frame relative mt-5 flex w-full max-w-4xl flex-wrap items-center justify-between gap-5 px-5 py-4 text-left animate-fade-up sm:mt-6 sm:px-8 sm:py-5"
+          className="public-hero-frame relative mt-5 flex w-full max-w-4xl flex-col gap-5 px-5 py-4 text-left animate-fade-up sm:mt-6 sm:px-8 sm:py-5 lg:flex-row lg:items-center lg:justify-between"
           style={{ animationDelay: "0.7s" }}
         >
           <div className="relative flex items-center gap-3">
@@ -161,11 +215,34 @@ export function Hero({ settings, heroMedia = null }: HeroProps) {
               <span className="mt-1 block font-mono text-[9px] tracking-[0.22em] text-ink-faint uppercase">Build intelligence for motion</span>
             </span>
           </div>
-          <div className="relative flex flex-wrap gap-x-5 gap-y-2 font-mono text-[10px] tracking-[0.2em] text-ink-faint uppercase sm:gap-x-8">
-            <span>01 / SENSE</span>
-            <span>02 / REASON</span>
-            <span>03 / MOVE</span>
-          </div>
+          <ul className="public-hero-toolchain relative flex flex-wrap gap-2 sm:gap-3" aria-label="实验室工具链">
+            {toolchain.map((stage) => (
+              <li key={stage.id} className="public-hero-toolchain-stage">
+                <span className="public-hero-toolchain-index">{stage.index}</span>
+                <span className="public-hero-toolchain-label">{stage.label}</span>
+                <span className="public-hero-toolchain-icons" aria-label={`${stage.label}：${stage.tools.map((tool) => tool.name).join("、")}`}>
+                  {stage.tools.map((tool) => (
+                    <span key={tool.name} className={`public-tool-mark public-tool-mark-${tool.tone}`} title={tool.name}>
+                      {tool.icon ? (
+                        <Image
+                          src={tool.icon}
+                          alt={tool.name}
+                          width={32}
+                          height={32}
+                          sizes="32px"
+                          className="public-tool-logo"
+                        />
+                      ) : (
+                        <svg viewBox="0 0 24 24" aria-hidden focusable="false">
+                          <path d="M8 4h8v3h3v2.4a4.6 4.6 0 0 1-3 4.3 5 5 0 0 1-2.7 2.3V18h3v2H7.7v-2h3v-2a5 5 0 0 1-2.7-2.3 4.6 4.6 0 0 1-3-4.3V7h3V4Zm-1 5.4c0 .9.5 1.7 1.3 2.1a5.3 5.3 0 0 1-.3-1.8V9H7v.4Zm10 0v.3c0 .6-.1 1.2-.3 1.8.8-.4 1.3-1.2 1.3-2.1V9h-1v.4Z" />
+                        </svg>
+                      )}
+                    </span>
+                  ))}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       </Container>
 

@@ -100,12 +100,23 @@ function getOrientationConstructor(): OrientationConstructor | null {
   return window.DeviceOrientationEvent as unknown as OrientationConstructor;
 }
 
-function writeMotionVariables(root: HTMLElement, x: number, y: number, rx: number, ry: number, force: number) {
+function writeMotionVariables(
+  root: HTMLElement,
+  x: number,
+  y: number,
+  rx: number,
+  ry: number,
+  force: number,
+  artworkScrollX = 0,
+  artworkScrollY = 0,
+) {
   root.style.setProperty("--glass-x", x.toFixed(3));
   root.style.setProperty("--glass-y", y.toFixed(3));
   root.style.setProperty("--glass-rx", rx.toFixed(3));
   root.style.setProperty("--glass-ry", ry.toFixed(3));
   root.style.setProperty("--scroll-force", force.toFixed(3));
+  root.style.setProperty("--artwork-scroll-x", `${artworkScrollX.toFixed(3)}px`);
+  root.style.setProperty("--artwork-scroll-y", `${artworkScrollY.toFixed(3)}px`);
 }
 
 /**
@@ -218,6 +229,8 @@ export function useGravityMotion(
     const yState: SpringState = { position: 0, velocity: 0 };
     const rxState: SpringState = { position: 0, velocity: 0 };
     const ryState: SpringState = { position: 0, velocity: 0 };
+    const artworkScrollXState: SpringState = { position: 0, velocity: 0 };
+    const artworkScrollYState: SpringState = { position: 0, velocity: 0 };
 
     const frame = (now: number) => {
       if (!running || !visible) return;
@@ -241,6 +254,13 @@ export function useGravityMotion(
       const y = stepSpring(yState, clamp(targetY, -1, 1) * maxShift, seconds);
       const rx = stepSpring(rxState, clamp(targetY, -1, 1) * 2, seconds);
       const ry = stepSpring(ryState, clamp(targetX, -1, 1) * 2, seconds);
+      // The oversized background word follows page scroll on its own spring.
+      // Keeping this in the existing rAF loop gives it the same eased, layered
+      // feel as the reference site without introducing a second scroll loop.
+      const artworkTargetX = clamp(window.scrollY * -0.08, -180, 0);
+      const artworkTargetY = clamp(window.scrollY * -0.025, -72, 0);
+      const artworkScrollX = stepSpring(artworkScrollXState, artworkTargetX, seconds, 30, 9);
+      const artworkScrollY = stepSpring(artworkScrollYState, artworkTargetY, seconds, 30, 9);
       xState.position = clamp(x.position, -maxShift, maxShift);
       xState.velocity = x.velocity;
       yState.position = clamp(y.position, -maxShift, maxShift);
@@ -249,6 +269,10 @@ export function useGravityMotion(
       rxState.velocity = rx.velocity;
       ryState.position = clamp(ry.position, -2, 2);
       ryState.velocity = ry.velocity;
+      artworkScrollXState.position = clamp(artworkScrollX.position, -180, 0);
+      artworkScrollXState.velocity = artworkScrollX.velocity;
+      artworkScrollYState.position = clamp(artworkScrollY.position, -72, 0);
+      artworkScrollYState.velocity = artworkScrollY.velocity;
       writeMotionVariables(
         root,
         xState.position,
@@ -256,6 +280,8 @@ export function useGravityMotion(
         rxState.position,
         ryState.position,
         scroll.force,
+        artworkScrollXState.position,
+        artworkScrollYState.position,
       );
 
       // Stop the loop once the spring has settled. Input handlers call
@@ -270,7 +296,11 @@ export function useGravityMotion(
         Math.abs(xState.position - targetX * maxShift) < 0.01 &&
         Math.abs(yState.position - targetY * maxShift) < 0.01 &&
         Math.abs(rxState.position - clamp(targetY, -1, 1) * 2) < 0.01 &&
-        Math.abs(ryState.position - clamp(targetX, -1, 1) * 2) < 0.01;
+        Math.abs(ryState.position - clamp(targetX, -1, 1) * 2) < 0.01 &&
+        Math.abs(artworkScrollXState.velocity) < 0.01 &&
+        Math.abs(artworkScrollYState.velocity) < 0.01 &&
+        Math.abs(artworkScrollXState.position - artworkTargetX) < 0.01 &&
+        Math.abs(artworkScrollYState.position - artworkTargetY) < 0.01;
       if (settled) {
         running = false;
         raf = 0;

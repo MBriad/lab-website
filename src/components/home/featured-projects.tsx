@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { InteractiveMedia } from "@/components/motion/interactive-media";
 import { Reveal } from "@/components/motion/reveal";
-import { TiltCard } from "@/components/motion/tilt-card";
 import { useHorizontalRail } from "@/components/motion/use-horizontal-rail";
 import { Container } from "@/components/ui/container";
 import { MediaImage } from "@/components/ui/media-image";
@@ -21,17 +21,22 @@ interface ProjectRailCardProps {
 
 function ProjectRailCard({ project }: ProjectRailCardProps) {
   return (
-    <TiltCard className="h-full">
+    <div className="h-full">
       <article className="glass-panel-strong group flex h-full min-h-[29rem] flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-accent">
-        <Link href={`/projects/${project.slug}`} className="block focus-visible:outline-offset-[-4px]">
-          <MediaImage
-            media={project.cover}
-            alt={project.title}
-            mode="cover"
+        <Link href={`/projects/${project.slug}`} className="group/media block focus-visible:outline-offset-[-4px]">
+          <InteractiveMedia
             className="aspect-[16/10] w-full shrink-0 border-b border-hairline bg-white/34"
-            sizes="(min-width: 1280px) 44vw, (min-width: 640px) 68vw, 88vw"
-            imgClassName="object-cover transition-transform duration-700 group-hover:scale-[1.035]"
-          />
+            frameClassName="h-full"
+          >
+            <MediaImage
+              media={project.cover}
+              alt={project.title}
+              mode="cover"
+              className="h-full w-full"
+              sizes="(min-width: 1280px) 44vw, (min-width: 640px) 68vw, 88vw"
+              imgClassName="object-cover"
+            />
+          </InteractiveMedia>
         </Link>
         <div className="flex flex-1 flex-col p-6 sm:p-7">
           <div className="flex items-center justify-between gap-4 font-mono text-[10px] tracking-[0.25em] text-ink-faint uppercase">
@@ -48,7 +53,7 @@ function ProjectRailCard({ project }: ProjectRailCardProps) {
           </div>
         </div>
       </article>
-    </TiltCard>
+    </div>
   );
 }
 

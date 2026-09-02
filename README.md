@@ -28,10 +28,7 @@ content management console under `/admin/**`. Data access is centralized in
 The data layer switches between two implementations of the same `ApiClient`
 interface, selected by `NEXT_PUBLIC_API_MODE` (see `.env.example`):
 
-- **`mock` (default)** — deterministic in-memory fixtures; no backend needed.
-  Public pages are statically prerendered at build time.
-  Admin credentials (mock only): `admin` / `admin123`.
-- **`real`** — HTTP against the CMS backend defined by
+- **`real` (default, including when the variable is unset)** — HTTP against the CMS backend defined by
   `contracts/openapi.json`. The HTTP client sends every request with
   `cache: "no-store"` (see `src/lib/api/http.ts`), which opts each data
   route out of build-time prerendering: pages render per request, content
@@ -39,10 +36,21 @@ interface, selected by `NEXT_PUBLIC_API_MODE` (see `.env.example`):
   backend is unreachable. (Next 16 requires route segment config such as
   `export const dynamic` to be a static string literal, so the mode switch
   lives in the data layer instead of per-route exports.)
+- **`mock` (explicit opt-in only)** — deterministic in-memory fixtures; no
+  backend needed. Public pages are statically prerendered at build time.
+  Admin credentials: `admin` / `admin123`.
+
+Mock mode is intentionally isolated: the browser-side admin client and the
+server-rendered public site can own separate in-memory fixture databases, so
+admin edits are not persistent and are not guaranteed to appear on public
+pages. Use real mode whenever testing CMS publishing or data synchronization.
+Because real mode is the default, local public pages need the backend service
+running; without it, data-driven sections show their load-failure state.
 
 ### Pointing at the real backend
 
-Copy `.env.example` to `.env.local` and set:
+Copy `.env.example` to `.env.local` and configure the backend origin. Real mode
+is already the default, but it can be stated explicitly:
 
 ```bash
 NEXT_PUBLIC_API_MODE=real
@@ -50,7 +58,9 @@ NEXT_PUBLIC_API_BASE_URL=/api/v1
 BACKEND_ORIGIN=http://127.0.0.1:8000
 ```
 
-Then run the Codex backend (see `backend/`) and `pnpm dev`.
+Start the Codex backend first (see `backend/`), then run `pnpm dev`. For a
+frontend-only visual session, explicitly set `NEXT_PUBLIC_API_MODE=mock` and
+do not expect admin edits to persist or synchronize with server-rendered pages.
 
 How the wiring works:
 
