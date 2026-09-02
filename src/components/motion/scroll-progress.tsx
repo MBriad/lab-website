@@ -7,8 +7,10 @@ import { prefersReducedMotion } from "./motion-prefs";
  * Public reading progress: a quiet top edge bar plus a circular back-to-top
  * affordance that appears after the reader leaves the hero.
  *
- * Both indicators are updated directly inside one rAF-throttled scroll path;
- * React state is intentionally not involved in high-frequency scroll work.
+ * Both indicators are updated directly inside one scroll path coalesced by
+ * requestAnimationFrame with a 160 ms timeout fallback (some embedded or
+ * background surfaces never fire animation frames); React state is
+ * intentionally not involved in high-frequency scroll work.
  */
 export function ScrollProgress() {
   const barRef = useRef<HTMLDivElement>(null);
@@ -27,10 +29,10 @@ export function ScrollProgress() {
     circle.style.strokeDasharray = `${perimeter}`;
     circle.style.strokeDashoffset = `${perimeter}`;
 
-    let raf = 0;
+    let frame = 0;
+    let fallback = 0;
 
     const update = () => {
-      raf = 0;
       const doc = document.documentElement;
       const max = doc.scrollHeight - window.innerHeight;
       const progress = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
@@ -45,8 +47,26 @@ export function ScrollProgress() {
       button.style.pointerEvents = visible ? "auto" : "none";
     };
 
+    const flush = () => {
+      if (fallback) {
+        window.clearTimeout(fallback);
+        fallback = 0;
+      }
+      frame = 0;
+      update();
+    };
+
     const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(update);
+      if (frame) cancelAnimationFrame(frame);
+      if (fallback) window.clearTimeout(fallback);
+      frame = requestAnimationFrame(flush);
+      // Some embedded/background browser surfaces never fire animation
+      // frames (mirrors `use-horizontal-rail.ts`); the timeout keeps the
+      // progress indicators correct when rAF is throttled to zero.
+      fallback = window.setTimeout(() => {
+        if (frame) cancelAnimationFrame(frame);
+        flush();
+      }, 160);
     };
 
     const toTop = () => {
@@ -61,7 +81,8 @@ export function ScrollProgress() {
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
       button.removeEventListener("click", toTop);
-      if (raf) cancelAnimationFrame(raf);
+      if (frame) cancelAnimationFrame(frame);
+      if (fallback) window.clearTimeout(fallback);
     };
   }, []);
 
