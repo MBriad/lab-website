@@ -36,7 +36,8 @@ export function Navbar({ labName, logo = null }: NavbarProps) {
 
     const update = () => {
       raf = 0;
-      setScrolled(window.scrollY > 8);
+      const next = window.scrollY > 50;
+      setScrolled((current) => (current === next ? current : next));
     };
 
     const onScroll = () => {
@@ -78,19 +79,17 @@ export function Navbar({ labName, logo = null }: NavbarProps) {
     <>
       <header
         data-motion-probe="nav"
+        data-scrolled={scrolled ? "true" : "false"}
         className={cn(
-          "public-nav fixed inset-x-0 top-0 z-40 transition-[translate,background-color,border-color,backdrop-filter] duration-300",
-          scrolled
-            ? "border-b border-hairline bg-white/66 shadow-[0_8px_30px_rgba(112,132,205,0.09)] backdrop-blur-xl"
-            : "border-b border-transparent",
-          "translate-y-0",
+          "public-nav fixed inset-x-0 top-0 z-40",
+          scrolled ? "public-nav-scrolled" : "public-nav-top",
         )}
       >
         <nav
           aria-label="主导航"
-          className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+          className="public-nav-inner mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
         >
-          <Link href="/" className="flex items-center gap-3" aria-label={`${labName} 首页`}>
+          <Link href="/" className="public-nav-brand flex items-center gap-3" aria-label={`${labName} 首页`}>
             {logo ? (
               <MediaImage
                 media={logo}
@@ -127,7 +126,7 @@ export function Navbar({ labName, logo = null }: NavbarProps) {
                   href={link.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative px-3 py-2 text-sm transition-colors",
+                    "public-nav-link group relative px-3 py-2 text-sm transition-colors",
                     active ? "text-accent" : "text-ink-muted hover:text-ink",
                   )}
                 >
@@ -136,8 +135,10 @@ export function Navbar({ labName, logo = null }: NavbarProps) {
                   </span>
                   {link.label}
                   {active ? (
-                    <span aria-hidden className="absolute inset-x-3 bottom-0 h-px bg-accent" />
-                  ) : null}
+                    <span aria-hidden className="public-nav-link-line public-nav-link-line-active" />
+                  ) : (
+                    <span aria-hidden className="public-nav-link-line" />
+                  )}
                 </Link>
               );
             })}
