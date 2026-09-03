@@ -71,3 +71,10 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/mbri/lab-website-backend:${{ steps.version.outputs.VERSION }}
             ${{ env.REGISTRY }}/mbri/lab-website-backend:latest
+
+      # 中继 postgres 基础镜像(服务器无法直连 Docker Hub, 全部改走 ACR/VPC 通道)
+      - name: 中继 postgres 基础镜像到 ACR
+        run: |
+          docker pull docker.io/library/postgres:16-alpine
+          docker tag docker.io/library/postgres:16-alpine "$REGISTRY/mbri/lab-website-postgres:16"
+          docker push "$REGISTRY/mbri/lab-website-postgres:16"
