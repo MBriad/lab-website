@@ -1,5 +1,10 @@
 .git
 .git/**
+.env
+.env.*
+!.env.example
+infra/.env
+backend/.env
 .next
 .next/**
 node_modules

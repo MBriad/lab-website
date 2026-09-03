@@ -35,10 +35,14 @@ port.
 - On the first backend start, the tracked sanitized media snapshot is copied
   into an empty `media_data` volume. Existing volume contents are never
   overwritten.
+- On the first backend start with `SEED_SNAPSHOT=true`, the tracked CMS rows
+  are imported into an empty PostgreSQL database. A marker in `media_data`
+  makes this one-shot; later restarts and edits are never overwritten. Set
+  `SEED_SNAPSHOT=false` for a blank deployment.
 
-The tracked `backend/data/cms.db` is the SQLite fixture used by local Python
-tests and is not used by the PostgreSQL deployment. The PostgreSQL volume is
-initialized by Alembic and then managed through the admin API.
+The tracked `backend/data/cms.db` is the SQLite source snapshot used for local
+tests and, when enabled, the first-run PostgreSQL import. PostgreSQL is then
+managed through the admin API.
 
 ## Stop / inspect
 
@@ -46,6 +50,14 @@ initialized by Alembic and then managed through the admin API.
 docker compose --env-file infra/.env -f infra/docker-compose.yml ps
 docker compose --env-file infra/.env -f infra/docker-compose.yml logs -f frontend backend
 docker compose --env-file infra/.env -f infra/docker-compose.yml down
+```
+
+The sanitized snapshot intentionally contains no administrator password. After
+the first start, create a local admin through the backend container:
+
+```powershell
+docker compose --env-file infra/.env -f infra/docker-compose.yml exec backend `
+  python scripts/create_admin.py admin "choose-a-local-password"
 ```
 
 Do not add `-v` to `down` unless you intentionally want to remove the

@@ -9,4 +9,11 @@ if [ -d /app/backend/data/media ] && [ -d /app/media ] && [ -z "$(ls -A /app/med
 fi
 
 alembic -c alembic.ini upgrade head
+
+if [ "${SEED_SNAPSHOT:-true}" = "true" ]; then
+  python scripts/seed_snapshot.py \
+    --snapshot "${CMS_SNAPSHOT_PATH:-/app/backend/data/cms.db}" \
+    --marker /app/media/.cms-snapshot-seeded
+fi
+
 exec "$@"

@@ -58,9 +58,14 @@ def upgrade() -> None:
     # cover references are promoted; certificates and hidden/draft content stay
     # out of the independent visual archive until an administrator opts in.
     connection = op.get_bind()
+    published_cutoff = (
+        "datetime(CURRENT_TIMESTAMP, '+1 second')"
+        if connection.dialect.name == "sqlite"
+        else "(CURRENT_TIMESTAMP + INTERVAL '1 second')"
+    )
     connection.execute(
         sa.text(
-            """
+            f"""
             UPDATE media
             SET is_gallery = TRUE,
                 gallery_title = (
@@ -88,14 +93,14 @@ def upgrade() -> None:
     )
     connection.execute(
         sa.text(
-            """
+            f"""
             UPDATE media
             SET is_gallery = TRUE,
                 gallery_title = (
                     SELECT title FROM projects
                     WHERE projects.cover_media_id = media.id
                       AND projects.is_visible = TRUE
-                      AND (projects.published_at IS NULL OR projects.published_at <= CURRENT_TIMESTAMP)
+                      AND (projects.published_at IS NULL OR projects.published_at <= {published_cutoff})
                     ORDER BY projects.sort_order ASC, projects.id ASC
                     LIMIT 1
                 ),
@@ -103,7 +108,7 @@ def upgrade() -> None:
                     SELECT sort_order FROM projects
                     WHERE projects.cover_media_id = media.id
                       AND projects.is_visible = TRUE
-                      AND (projects.published_at IS NULL OR projects.published_at <= CURRENT_TIMESTAMP)
+                      AND (projects.published_at IS NULL OR projects.published_at <= {published_cutoff})
                     ORDER BY projects.sort_order ASC, projects.id ASC
                     LIMIT 1
                 ), 0),
@@ -113,21 +118,21 @@ def upgrade() -> None:
                 SELECT cover_media_id FROM projects
                 WHERE cover_media_id IS NOT NULL
                   AND is_visible = TRUE
-                  AND (published_at IS NULL OR published_at <= CURRENT_TIMESTAMP)
+                  AND (published_at IS NULL OR published_at <= {published_cutoff})
               )
             """
         )
     )
     connection.execute(
         sa.text(
-            """
+            f"""
             UPDATE media
             SET is_gallery = TRUE,
                 gallery_title = (
                     SELECT title FROM news
                     WHERE news.cover_media_id = media.id
                       AND news.is_visible = TRUE
-                      AND (news.published_at IS NULL OR news.published_at <= CURRENT_TIMESTAMP)
+                      AND (news.published_at IS NULL OR news.published_at <= {published_cutoff})
                     ORDER BY news.published_at DESC, news.sort_order ASC, news.id ASC
                     LIMIT 1
                 ),
@@ -135,7 +140,7 @@ def upgrade() -> None:
                     SELECT sort_order FROM news
                     WHERE news.cover_media_id = media.id
                       AND news.is_visible = TRUE
-                      AND (news.published_at IS NULL OR news.published_at <= CURRENT_TIMESTAMP)
+                      AND (news.published_at IS NULL OR news.published_at <= {published_cutoff})
                     ORDER BY news.published_at DESC, news.sort_order ASC, news.id ASC
                     LIMIT 1
                 ), 0),
@@ -145,7 +150,7 @@ def upgrade() -> None:
                 SELECT cover_media_id FROM news
                 WHERE cover_media_id IS NOT NULL
                   AND is_visible = TRUE
-                  AND (published_at IS NULL OR published_at <= CURRENT_TIMESTAMP)
+                  AND (published_at IS NULL OR published_at <= {published_cutoff})
               )
             """
         )

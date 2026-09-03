@@ -42,6 +42,8 @@ services:
       SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
       FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:3000}
       MEDIA_ROOT: /app/media
+      CMS_SNAPSHOT_PATH: /app/backend/data/cms.db
+      SEED_SNAPSHOT: ${SEED_SNAPSHOT:-true}
     depends_on:
       postgres:
         condition: service_healthy
