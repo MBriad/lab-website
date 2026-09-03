@@ -1,0 +1,73 @@
+# 流水线一：构建镜像并推送到 ACR
+# 触发方式：
+#   1. 手动点 Run workflow（可输入版本号, 默认 v1.0）
+#   2. 推一个 v* 的 git tag 时自动触发
+# 前提：仓库 Secrets 需配置 ACR_USERNAME / ACR_PASSWORD（阿里云容器镜像服务）
+name: build-push
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "镜像版本号, 形如 v1.0"
+        required: true
+        default: v1.0
+  push:
+    tags:
+      - "v*"
+
+env:
+  # 你的 ACR 公网域名(华南1/广州)。同地域 ECS 可换成 -vpc 域名走内网拉取。
+  REGISTRY: crpi-zu9n3xiqg04wacyr.cn-guangzhou.personal.cr.aliyuncs.com
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 确定版本号
+        id: version
+        run: |
+          # 用 git tag 触发时, GITHUB_REF_NAME 就是 tag 名(如 v1.0);
+          # 手动触发时用你填写的输入值。
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "VERSION=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 登录 ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      # 前端镜像: 仓库根目录为 context, 使用 infra/frontend.Dockerfile
+      - name: 构建并推送 frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/frontend.Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/mbri/lab-website-front:${{ steps.version.outputs.VERSION }}
+            ${{ env.REGISTRY }}/mbri/lab-website-front:latest
+          build-args: |
+            BACKEND_ORIGIN=http://backend:8000
+            NEXT_PUBLIC_API_MODE=real
+            NEXT_PUBLIC_API_BASE_URL=/api/v1
+
+      # 后端镜像: 同一 context, 使用 infra/Dockerfile
+      # npm/pypi 在此 runner(美区) 直连官方源即可, 无需镜像参数
+      - name: 构建并推送 backend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/mbri/lab-website-backend:${{ steps.version.outputs.VERSION }}
+            ${{ env.REGISTRY }}/mbri/lab-website-backend:latest

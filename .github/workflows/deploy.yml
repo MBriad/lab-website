@@ -1,0 +1,49 @@
+# 流水线二：把指定版本的镜像部署到服务器
+# 触发方式：手动点 Run workflow, 填写要发布的版本号(如 v1.0)
+# 前提：
+#   - 服务器上已有 /home/admin/lab-website/docker-compose.yml + .env(引导步骤已就位)
+#   - 仓库 Secrets 需配置: DEPLOY_SSH_KEY(服务器私钥), ACR_USERNAME, ACR_PASSWORD
+#   - 与个人网站(80/443/Mongo 27018)完全隔离, 只操作 lab-website 目录
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "要部署的镜像版本号, 形如 v1.0"
+        required: true
+        default: v1.0
+
+env:
+  # 服务器与 ACR 同地域(cn-guangzhou), 用 VPC 域名走内网拉取; runner 侧仍用公网域名
+  REGISTRY: crpi-zu9n3xiqg04wacyr-vpc.cn-guangzhou.personal.cr.aliyuncs.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 通过 SSH 部署
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 8.138.194.87
+          username: admin
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: VERSION,REGISTRY,ACR_USERNAME,ACR_PASSWORD
+          script: |
+            set -e
+            cd /home/admin/lab-website
+
+            # 把 compose 中两个镜像引用的 vX.Y 换成目标版本
+            sed -i -E "s/(lab-website-(front|backend):)v[0-9.]+/\1${VERSION}/" docker-compose.yml
+
+            # 登录 ACR(pwd 走 stdin, 不进 shell 历史; 该命令会向容器凭据文件写 token)
+            echo "${ACR_PASSWORD}" | docker login ${REGISTRY} --username "${ACR_USERNAME}" --password-stdin
+
+            docker compose pull
+            docker compose up -d
+            docker compose ps
+        env:
+          VERSION: ${{ inputs.version }}
+          REGISTRY: ${{ env.REGISTRY }}
+          ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}

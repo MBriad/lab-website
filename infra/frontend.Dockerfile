@@ -4,6 +4,11 @@ FROM node:22-alpine AS deps
 
 WORKDIR /app
 
+# Default keeps the official registry; pass --build-arg NPM_REGISTRY to switch
+# (e.g. https://registry.npmmirror.com) when the build host cannot reach it.
+ARG NPM_REGISTRY=https://registry.npmjs.org
+ENV NPM_CONFIG_REGISTRY=${NPM_REGISTRY}
+
 RUN corepack enable && corepack prepare pnpm@11.25.0 --activate
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
