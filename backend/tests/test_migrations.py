@@ -1,0 +1,187 @@
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+import subprocess
+from uuid import uuid4
+
+from sqlalchemy import create_engine, inspect, text
+
+
+def run_alembic(
+    project_root: Path, database_url: str, command: str, target: str
+) -> None:
+    environment = os.environ.copy()
+    environment.pop("PYTHONPATH", None)
+    environment["DATABASE_URL"] = database_url
+    result = subprocess.run(
+        ["alembic", "-c", "backend/alembic.ini", command, target],
+        cwd=project_root,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_initial_migration_creates_only_the_core_schema(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[2]
+    database_url = f"sqlite:///{(tmp_path / 'migration.db').as_posix()}"
+    run_alembic(project_root, database_url, "upgrade", "head")
+
+    engine = create_engine(database_url)
+    try:
+        tables = set(inspect(engine).get_table_names())
+        assert tables == {
+            "admins",
+            "alembic_version",
+            "awards",
+            "media",
+            "news",
+            "projects",
+            "research_areas",
+            "site_settings",
+        }
+        award_columns = {
+            column["name"]: column for column in inspect(engine).get_columns("awards")
+        }
+        assert award_columns["certificate_media_id"]["nullable"] is True
+        site_columns = {
+            column["name"]: column
+            for column in inspect(engine).get_columns("site_settings")
+        }
+        assert site_columns["core_platforms"]["nullable"] is False
+        assert site_columns["paper_count"]["nullable"] is False
+        assert site_columns["trained_student_count"]["nullable"] is False
+        project_columns = {
+            column["name"]: column for column in inspect(engine).get_columns("projects")
+        }
+        assert project_columns["demo_url"]["nullable"] is True
+        research_columns = {
+            column["name"]: column
+            for column in inspect(engine).get_columns("research_areas")
+        }
+        assert research_columns["application_scenarios"]["nullable"] is False
+        assert research_columns["representative_project_id"]["nullable"] is True
+        research_fks = inspect(engine).get_foreign_keys("research_areas")
+        representative_fk = next(
+            foreign_key
+            for foreign_key in research_fks
+            if foreign_key["constrained_columns"] == ["representative_project_id"]
+        )
+        assert representative_fk["referred_table"] == "projects"
+        assert representative_fk["options"]["ondelete"] == "SET NULL"
+    finally:
+        engine.dispose()
+
+    run_alembic(project_root, database_url, "downgrade", "0001_initial")
+    engine = create_engine(database_url)
+    try:
+        assert "demo_url" not in {
+            column["name"] for column in inspect(engine).get_columns("projects")
+        }
+        assert "representative_project_id" not in {
+            column["name"] for column in inspect(engine).get_columns("research_areas")
+        }
+    finally:
+        engine.dispose()
+
+    run_alembic(project_root, database_url, "upgrade", "head")
+    run_alembic(project_root, database_url, "downgrade", "base")
+    engine = create_engine(database_url)
+    try:
+        assert inspect(engine).get_table_names() == ["alembic_version"]
+    finally:
+        engine.dispose()
+
+
+def test_homepage_migration_backfills_existing_rows(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[2]
+    database_url = f"sqlite:///{(tmp_path / 'legacy.db').as_posix()}"
+    run_alembic(project_root, database_url, "upgrade", "0001_initial")
+
+    engine = create_engine(database_url)
+    project_id = uuid4()
+    try:
+        now = datetime.now(timezone.utc)
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "INSERT INTO site_settings "
+                    "(key, site_title, lab_name, created_at, updated_at) "
+                    "VALUES (:key, :site_title, :lab_name, :created_at, :updated_at)"
+                ),
+                {
+                    "key": "default",
+                    "site_title": "Legacy site",
+                    "lab_name": "Legacy lab",
+                    "created_at": now,
+                    "updated_at": now,
+                },
+            )
+            connection.execute(
+                text(
+                    "INSERT INTO projects "
+                    "(id, slug, title, description, sort_order, is_visible, "
+                    "created_at, updated_at) "
+                    "VALUES (:id, :slug, :title, :description, 0, 1, "
+                    ":created_at, :updated_at)"
+                ),
+                {
+                    "id": str(project_id),
+                    "slug": "legacy-project",
+                    "title": "Legacy project",
+                    "description": "Existing content",
+                    "created_at": now,
+                    "updated_at": now,
+                },
+            )
+            connection.execute(
+                text(
+                    "INSERT INTO research_areas "
+                    "(id, slug, title, description, sort_order, is_visible, "
+                    "created_at, updated_at) "
+                    "VALUES (:id, :slug, :title, :description, 0, 1, "
+                    ":created_at, :updated_at)"
+                ),
+                {
+                    "id": str(uuid4()),
+                    "slug": "legacy-area",
+                    "title": "Legacy area",
+                    "description": "Existing content",
+                    "created_at": now,
+                    "updated_at": now,
+                },
+            )
+    finally:
+        engine.dispose()
+
+    run_alembic(project_root, database_url, "upgrade", "head")
+    engine = create_engine(database_url)
+    try:
+        with engine.connect() as connection:
+            settings = connection.execute(
+                text(
+                    "SELECT site_title, lab_name, core_platforms, paper_count, "
+                    "patent_count, active_project_count, trained_student_count "
+                    "FROM site_settings WHERE key = 'default'"
+                )
+            ).one()
+            assert settings == (
+                "Legacy site",
+                "Legacy lab",
+                "[]",
+                0,
+                0,
+                0,
+                0,
+            )
+            area = connection.execute(
+                text(
+                    "SELECT application_scenarios, representative_project_id "
+                    "FROM research_areas WHERE slug = 'legacy-area'"
+                )
+            ).one()
+            assert area == ("[]", None)
+    finally:
+        engine.dispose()

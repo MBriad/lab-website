@@ -1,6 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Node / Next.js
 /node_modules
 /.pnp
 .pnp.*
@@ -9,36 +9,33 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
-# testing
-/coverage
-
-# next.js
 /.next/
 /out/
-
-# production
 /build
+.vercel
+*.tsbuildinfo
+next-env.d.ts
 
-# misc
+# Testing and Python
+/coverage
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Environment files (the documented example is safe and intentionally tracked)
+.env*
+!.env.example
+
+# Miscellaneous
 .DS_Store
 *.pem
-
-# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-__pycache__/
-*.py[cod]
 
-# env files (the documented example is safe and intentionally tracked)
-.env*
-!.env.example
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Runtime CMS data is ignored by default. The sanitized snapshot currently
+# tracked in backend/data is intentionally force-added for local reproduction.
+backend/data/*
+!backend/data/.gitkeep
