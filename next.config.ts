@@ -9,6 +9,7 @@ const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN ?? "http://127.0.0.1:8000";
 const backend = new URL(BACKEND_ORIGIN);
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   async rewrites() {
     return [
       {
