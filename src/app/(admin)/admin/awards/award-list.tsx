@@ -89,7 +89,7 @@ export function AwardList() {
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        tag="SEC.05 // AWARDS"
+        tag="SEC.04 // AWARDS"
         title="荣誉管理"
         description="创建、编辑奖项，设置类别、级别、年份与精选状态。"
         actions={

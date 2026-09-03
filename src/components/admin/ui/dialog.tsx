@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 
 export interface DialogProps {
@@ -55,53 +56,56 @@ export function Dialog({
     if (open) panelRef.current?.focus();
   }, [open]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-background/75 backdrop-blur-sm"
-        onMouseDown={onClose}
-      />
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        tabIndex={-1}
-        className={cn(
-          "admin-dialog hud-panel relative flex max-h-[85vh] w-full flex-col focus:outline-none",
-          SIZE_CLS[size],
-        )}
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-hairline px-5 py-4">
-          <div>
-            <h2 className="font-display text-base font-semibold text-ink">
-              {title}
-            </h2>
-            {description ? (
-              <p className="mt-1 text-xs leading-5 text-ink-muted">
-                {description}
-              </p>
-            ) : null}
+  return createPortal(
+    (
+      <div className="admin-site fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-background/75 backdrop-blur-sm"
+          onMouseDown={onClose}
+        />
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          tabIndex={-1}
+          className={cn(
+            "admin-dialog hud-panel relative flex max-h-[85vh] w-full flex-col focus:outline-none",
+            SIZE_CLS[size],
+          )}
+        >
+          <div className="flex items-start justify-between gap-4 border-b border-hairline px-5 py-4">
+            <div>
+              <h2 className="font-display text-base font-semibold text-ink">
+                {title}
+              </h2>
+              {description ? (
+                <p className="mt-1 text-xs leading-5 text-ink-muted">
+                  {description}
+                </p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="关闭对话框"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-hud text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
+            >
+              <span aria-hidden>×</span>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="关闭对话框"
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-hud text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
-          >
-            <span aria-hidden>×</span>
-          </button>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            {children}
+          </div>
+          {footer ? (
+            <div className="border-t border-hairline px-5 py-3">{footer}</div>
+          ) : null}
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          {children}
-        </div>
-        {footer ? (
-          <div className="border-t border-hairline px-5 py-3">{footer}</div>
-        ) : null}
       </div>
-    </div>
+    ),
+    document.body,
   );
 }

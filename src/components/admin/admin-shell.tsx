@@ -28,8 +28,9 @@ const NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/projects", label: "项目", code: "02" },
   { href: "/admin/research", label: "研究方向", code: "03" },
   { href: "/admin/awards", label: "荣誉", code: "04" },
-  { href: "/admin/media", label: "素材库", code: "05" },
-  { href: "/admin/settings", label: "设置", code: "06" },
+  { href: "/admin/gallery", label: "影像记录", code: "05" },
+  { href: "/admin/media", label: "素材库", code: "06" },
+  { href: "/admin/settings", label: "设置", code: "07" },
 ];
 
 function isActive(pathname: string, item: AdminNavItem): boolean {

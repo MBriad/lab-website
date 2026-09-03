@@ -231,6 +231,22 @@ export function useGravityMotion(
     const ryState: SpringState = { position: 0, velocity: 0 };
     const artworkScrollXState: SpringState = { position: 0, velocity: 0 };
     const artworkScrollYState: SpringState = { position: 0, velocity: 0 };
+    const artworkWord = root.querySelector<HTMLElement>(".public-artwork-word");
+    let artworkTravel = 160;
+
+    const updateArtworkTravel = () => {
+      if (!artworkWord) {
+        artworkTravel = 160;
+        return;
+      }
+      const artworkWidth = artworkWord.getBoundingClientRect().width;
+      const artworkInset = Number.parseFloat(getComputedStyle(artworkWord).left) || 0;
+      artworkTravel =
+        artworkWidth > 0
+          ? Math.max(0, artworkWidth - window.innerWidth + artworkInset * 2)
+          : 160;
+    };
+    updateArtworkTravel();
 
     const frame = (now: number) => {
       if (!running || !visible) return;
@@ -254,11 +270,16 @@ export function useGravityMotion(
       const y = stepSpring(yState, clamp(targetY, -1, 1) * maxShift, seconds);
       const rx = stepSpring(rxState, clamp(targetY, -1, 1) * 2, seconds);
       const ry = stepSpring(ryState, clamp(targetX, -1, 1) * 2, seconds);
-      // The oversized background word follows page scroll on its own spring.
-      // Keeping this in the existing rAF loop gives it the same eased, layered
-      // feel as the reference site without introducing a second scroll loop.
-      const artworkTargetX = clamp(window.scrollY * -0.08, -180, 0);
-      const artworkTargetY = clamp(window.scrollY * -0.025, -72, 0);
+      // The oversized background word follows the complete page scroll range
+      // on its own spring. Normalizing against the available range keeps the
+      // word from reaching its endpoint early on long pages.
+      const scrollRange = Math.max(
+        document.documentElement.scrollHeight - window.innerHeight,
+        1,
+      );
+      const scrollProgress = clamp(window.scrollY / scrollRange, 0, 1);
+      const artworkTargetX = scrollProgress * -artworkTravel;
+      const artworkTargetY = scrollProgress * -48;
       const artworkScrollX = stepSpring(artworkScrollXState, artworkTargetX, seconds, 30, 9);
       const artworkScrollY = stepSpring(artworkScrollYState, artworkTargetY, seconds, 30, 9);
       xState.position = clamp(x.position, -maxShift, maxShift);
@@ -269,9 +290,9 @@ export function useGravityMotion(
       rxState.velocity = rx.velocity;
       ryState.position = clamp(ry.position, -2, 2);
       ryState.velocity = ry.velocity;
-      artworkScrollXState.position = clamp(artworkScrollX.position, -180, 0);
+      artworkScrollXState.position = clamp(artworkScrollX.position, -artworkTravel, 0);
       artworkScrollXState.velocity = artworkScrollX.velocity;
-      artworkScrollYState.position = clamp(artworkScrollY.position, -72, 0);
+      artworkScrollYState.position = clamp(artworkScrollY.position, -48, 0);
       artworkScrollYState.velocity = artworkScrollY.velocity;
       writeMotionVariables(
         root,
@@ -315,6 +336,19 @@ export function useGravityMotion(
       lastFrame = performance.now();
       raf = requestAnimationFrame(frame);
     };
+
+    const onResize = () => {
+      updateArtworkTravel();
+      start();
+    };
+    const artworkResizeObserver =
+      artworkWord && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => {
+            updateArtworkTravel();
+            start();
+          })
+        : null;
+    if (artworkResizeObserver && artworkWord) artworkResizeObserver.observe(artworkWord);
 
     const stop = () => {
       running = false;
@@ -378,6 +412,7 @@ export function useGravityMotion(
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("blur", onPointerLeave, { passive: true });
     document.addEventListener("visibilitychange", onVisibility);
@@ -387,8 +422,10 @@ export function useGravityMotion(
     return () => {
       stop();
       detachOrientation();
+      artworkResizeObserver?.disconnect();
       attachOrientationRef.current = null;
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("blur", onPointerLeave);
       document.removeEventListener("visibilitychange", onVisibility);

@@ -1,6 +1,7 @@
 import type {
   AdminPublic,
   AwardAdmin,
+  GalleryItemAdmin,
   MediaAdmin,
   MediaPublic,
   NewsAdmin,
@@ -98,6 +99,7 @@ export interface MockDb {
   news: NewsAdmin[];
   projects: ProjectAdmin[];
   awards: AwardAdmin[];
+  galleryItems: GalleryItemAdmin[];
   media: MediaAdmin[];
 }
 
@@ -507,6 +509,31 @@ export function createSeedDb(): MockDb {
     },
   ];
 
+  const galleryItems: GalleryItemAdmin[] = [
+    {
+      id: keyVisual.id,
+      title: "实验室视觉档案",
+      description: "实验室年度招新与研究展示的视觉记录。",
+      media: toPublicMedia(keyVisual),
+      media_id: keyVisual.id,
+      sort_order: 1,
+      is_visible: true,
+      created_at: "2025-09-15T08:00:00Z",
+      updated_at: "2026-02-12T08:00:00Z",
+    },
+    {
+      id: tactile.id,
+      title: "具身感知实验记录",
+      description: "视触融合操作平台的阶段性实验影像。",
+      media: toPublicMedia(tactile),
+      media_id: tactile.id,
+      sort_order: 2,
+      is_visible: true,
+      created_at: "2025-09-18T08:00:00Z",
+      updated_at: "2025-12-20T08:00:00Z",
+    },
+  ];
+
   const news: NewsAdmin[] = [
     {
       id: "33333333-0000-4000-8000-000000000001",
@@ -604,5 +631,13 @@ export function createSeedDb(): MockDb {
     },
   ];
 
-  return { settings, researchAreas, news, projects, awards, media: mediaList };
+  return {
+    settings,
+    researchAreas,
+    news,
+    projects,
+    awards,
+    galleryItems,
+    media: mediaList,
+  };
 }

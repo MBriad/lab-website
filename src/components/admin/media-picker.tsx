@@ -9,6 +9,11 @@ import { formatBytes } from "@/lib/format";
 import type { MediaAdmin, MediaPublic, PageResponse } from "@/lib/types/api";
 import { describeApiError, isAuthError } from "./lib/errors";
 import { redirectToLogin } from "./lib/auth";
+import {
+  IMAGE_UPLOAD_ACCEPT,
+  summarizeMediaUploadFailures,
+  uploadMediaFiles,
+} from "./lib/media-upload";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { LoadingBlock, Spinner } from "./ui/spinner";
@@ -44,7 +49,12 @@ export function MediaPickerDialog({
     error: string | null;
   } | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    completed: number;
+    total: number;
+  } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset to page 1 whenever the dialog is (re)opened.
@@ -93,20 +103,37 @@ export function MediaPickerDialog({
   const error = loading ? null : snapshot?.error ?? null;
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files ?? []);
     // Reset so the same file can be picked again after an error.
     event.target.value = "";
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setUploadError("仅支持上传图片文件");
-      return;
-    }
+    if (files.length === 0) return;
+
     setUploading(true);
     setUploadError(null);
+    setUploadMessage(null);
+    setUploadProgress({ completed: 0, total: files.length });
     try {
-      const created = await api.uploadMedia(file);
-      setReloadKey((key) => key + 1); // refresh the grid
-      onPick(created);
+      const result = await uploadMediaFiles(files, (completed, total) => {
+        setUploadProgress({ completed, total });
+      });
+      if (result.uploaded.length > 0) setReloadKey((key) => key + 1);
+
+      if (result.failures.length > 0) {
+        const summary = summarizeMediaUploadFailures(result.failures);
+        if (result.uploaded.length > 0) {
+          setUploadMessage(`已上传 ${result.uploaded.length} 张图片。`);
+        }
+        setUploadError(summary);
+        return;
+      }
+
+      if (result.uploaded.length === 1 && files.length === 1) {
+        onPick(result.uploaded[0]);
+      } else {
+        setUploadMessage(
+          `已上传 ${result.uploaded.length} 张图片，请从列表中选择要绑定的素材。`,
+        );
+      }
     } catch (err) {
       if (isAuthError(err)) {
         redirectToLogin(router);
@@ -115,6 +142,7 @@ export function MediaPickerDialog({
       setUploadError(describeApiError(err, "上传失败，请重试"));
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -123,7 +151,7 @@ export function MediaPickerDialog({
       open={open}
       onClose={onClose}
       title="选择素材"
-      description="从素材库选择，或直接上传新图片。"
+      description="从素材库选择，或一次上传多张新图片。MPO 手机照片会自动转成 JPG。"
       size="xl"
       footer={
         result && result.pages > 1 ? (
@@ -135,7 +163,8 @@ export function MediaPickerDialog({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept={IMAGE_UPLOAD_ACCEPT}
+          multiple
           className="hidden"
           onChange={handleFileChange}
         />
@@ -145,13 +174,22 @@ export function MediaPickerDialog({
           loading={uploading}
           onClick={() => fileInputRef.current?.click()}
         >
-          上传图片
+          {uploading && uploadProgress
+            ? `上传中 ${uploadProgress.completed}/${uploadProgress.total}`
+            : "上传图片"}
         </Button>
         {uploading ? (
           <span className="flex items-center gap-2 text-xs text-ink-muted">
             <Spinner className="text-accent" />
-            正在上传…
+            {uploadProgress
+              ? `正在上传 ${uploadProgress.completed}/${uploadProgress.total} 张图片…`
+              : "正在上传…"}
           </span>
+        ) : null}
+        {uploadMessage ? (
+          <p role="status" className="text-xs text-success">
+            {uploadMessage}
+          </p>
         ) : null}
         {uploadError ? (
           <p role="alert" className="text-xs text-danger">

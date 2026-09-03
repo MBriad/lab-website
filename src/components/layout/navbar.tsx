@@ -2,11 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MediaImage } from "@/components/ui/media-image";
 import { cn } from "@/lib/cn";
 import type { MediaPublic } from "@/lib/types/api";
 import { NAV_LINKS, isNavActive } from "./nav-links";
+
+type NavItemSnapshot = {
+  element: HTMLElement;
+  rect: DOMRect;
+};
+
+type NavSnapshot = {
+  surface: DOMRect;
+  items: Map<string, NavItemSnapshot>;
+};
+
+function measureNav(nav: HTMLElement, surface: HTMLElement): NavSnapshot {
+  const items = new Map<string, NavItemSnapshot>();
+  nav.querySelectorAll<HTMLElement>("[data-nav-motion-item]").forEach((element) => {
+    const key = element.dataset.navMotionItem;
+    if (key) items.set(key, { element, rect: element.getBoundingClientRect() });
+  });
+  return { surface: surface.getBoundingClientRect(), items };
+}
 
 export interface NavbarProps {
   /** `lab_name` from site settings (falls back to a static label upstream). */
@@ -30,6 +49,10 @@ export function Navbar({ labName, logo = null }: NavbarProps) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const navRef = useRef<HTMLElement | null>(null);
+  const surfaceRef = useRef<HTMLSpanElement | null>(null);
+  const navSnapshotRef = useRef<NavSnapshot | null>(null);
+  const navAnimationsRef = useRef<Animation[]>([]);
 
   useEffect(() => {
     let raf = 0;
@@ -51,6 +74,79 @@ export function Navbar({ labName, logo = null }: NavbarProps) {
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
+
+  // Recreate cati.me's FLIP-style header morph: measure the old layout,
+  // commit the new state, then animate the surface and each content group
+  // from its previous position. This avoids the visible snap caused by
+  // changing width and padding at the same time.
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const surface = surfaceRef.current;
+    if (!nav || !surface) return;
+
+    const nextSnapshot = measureNav(nav, surface);
+    const previousSnapshot = navSnapshotRef.current;
+    navSnapshotRef.current = nextSnapshot;
+
+    navAnimationsRef.current.forEach((animation) => animation.cancel());
+    navAnimationsRef.current = [];
+
+    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!previousSnapshot || !isDesktop || reducedMotion || typeof surface.animate !== "function") {
+      return;
+    }
+
+    const duration = 650;
+    const easing = "cubic-bezier(0.16, 1, 0.3, 1)";
+    const animations: Animation[] = [];
+    const startRect = previousSnapshot.surface;
+    const targetRect = nextSnapshot.surface;
+    if (startRect.width > 0 && targetRect.width > 0) {
+      const startCenterX = startRect.left + startRect.width / 2;
+      const startCenterY = startRect.top + startRect.height / 2;
+      const targetCenterX = targetRect.left + targetRect.width / 2;
+      const targetCenterY = targetRect.top + targetRect.height / 2;
+      animations.push(
+        surface.animate(
+          [
+            {
+              transform: `translate(${startCenterX - targetCenterX}px, ${startCenterY - targetCenterY}px) scale(${startRect.width / targetRect.width}, ${startRect.height / targetRect.height})`,
+            },
+            { transform: "translate(0, 0) scale(1, 1)" },
+          ],
+          { duration, easing },
+        ),
+      );
+    }
+
+    nextSnapshot.items.forEach((targetItem, key) => {
+      const startItem = previousSnapshot.items.get(key);
+      if (!startItem || startItem.rect.width === 0 || targetItem.rect.width === 0) return;
+      const deltaX = startItem.rect.left - targetItem.rect.left;
+      const deltaY = startItem.rect.top - targetItem.rect.top;
+      if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) return;
+      animations.push(
+        targetItem.element.animate(
+          [
+            { transform: `translate(${deltaX}px, ${deltaY}px)` },
+            { transform: "translate(0, 0)" },
+          ],
+          { duration, easing },
+        ),
+      );
+    });
+
+    navAnimationsRef.current = animations;
+    const animationBatch = animations;
+    Promise.allSettled(animationBatch.map((animation) => animation.finished)).then(() => {
+      if (navAnimationsRef.current === animationBatch) navAnimationsRef.current = [];
+    });
+
+    return () => {
+      animationBatch.forEach((animation) => animation.cancel());
+    };
+  }, [scrolled]);
 
   // Close the mobile menu whenever the route changes (deferred to a timer
   // callback: direct synchronous setState inside an effect body is a
@@ -87,9 +183,16 @@ export function Navbar({ labName, logo = null }: NavbarProps) {
       >
         <nav
           aria-label="主导航"
-          className="public-nav-inner mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+          ref={navRef}
+          className="public-nav-inner mx-0 flex h-16 w-full max-w-none items-center justify-between px-4 sm:px-6 lg:px-8"
         >
-          <Link href="/" className="public-nav-brand flex items-center gap-3" aria-label={`${labName} 首页`}>
+          <span ref={surfaceRef} aria-hidden className="public-nav-surface" />
+          <Link
+            href="/"
+            data-nav-motion-item="brand"
+            className="public-nav-brand flex items-center gap-3"
+            aria-label={`${labName} 首页`}
+          >
             {logo ? (
               <MediaImage
                 media={logo}
@@ -117,7 +220,7 @@ export function Navbar({ labName, logo = null }: NavbarProps) {
             </span>
           </Link>
 
-          <div className="hidden items-center md:flex">
+          <div data-nav-motion-item="links" className="hidden items-center md:flex">
             {NAV_LINKS.map((link) => {
               const active = isNavActive(pathname, link.href);
               return (
@@ -152,6 +255,7 @@ export function Navbar({ labName, logo = null }: NavbarProps) {
 
           <button
             type="button"
+            data-nav-motion-item="menu"
             onClick={() => setOpen(true)}
             aria-expanded={open}
             aria-controls="mobile-menu"

@@ -180,13 +180,27 @@ body {
 .public-site .public-nav {
   padding: 0;
   pointer-events: none;
-  transition: padding 650ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .public-site .public-nav-inner {
   position: relative;
+  isolation: isolate;
   z-index: 1;
   pointer-events: auto;
+  transform-origin: top center;
+  animation: public-nav-enter 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.public-site .public-nav-inner > :not(.public-nav-surface) {
+  position: relative;
+  z-index: 1;
+}
+
+.public-site .public-nav-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   border: 1px solid transparent;
   border-radius: 0;
   background: rgba(255, 255, 255, 0.58);
@@ -194,29 +208,18 @@ body {
   backdrop-filter: blur(15px) saturate(132%);
   transform-origin: top center;
   transition:
-    width 650ms cubic-bezier(0.16, 1, 0.3, 1),
-    max-width 650ms cubic-bezier(0.16, 1, 0.3, 1),
-    min-height 650ms cubic-bezier(0.16, 1, 0.3, 1),
-    height 650ms cubic-bezier(0.16, 1, 0.3, 1),
-    padding 650ms cubic-bezier(0.16, 1, 0.3, 1),
     border-color 450ms ease,
     border-radius 650ms cubic-bezier(0.16, 1, 0.3, 1),
     background-color 450ms ease,
     box-shadow 650ms cubic-bezier(0.16, 1, 0.3, 1),
     backdrop-filter 450ms ease;
-  animation: public-nav-enter 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .public-site .public-nav-scrolled {
   padding: 0.65rem 0.75rem 0;
 }
 
-.public-site .public-nav-scrolled .public-nav-inner {
-  width: min(100%, 72rem);
-  max-width: 72rem;
-  min-height: 3.5rem;
-  height: 3.5rem;
-  padding-inline: 1.15rem;
+.public-site .public-nav-scrolled .public-nav-surface {
   border-color: rgba(255, 255, 255, 0.82);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.72);
@@ -224,6 +227,15 @@ body {
     0 10px 26px rgba(112, 132, 205, 0.11),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(22px) saturate(145%);
+}
+
+.public-site .public-nav-scrolled .public-nav-inner {
+  margin-inline: auto;
+  width: min(100%, 72rem);
+  max-width: 72rem;
+  min-height: 3.5rem;
+  height: 3.5rem;
+  padding-inline: 1.15rem;
 }
 
 .public-site .public-nav-brand {
@@ -270,6 +282,10 @@ body {
 
 @media (max-width: 767px) {
   .public-site .public-nav-inner {
+    background: transparent;
+  }
+
+  .public-site .public-nav-surface {
     background: rgba(255, 255, 255, 0.7);
   }
 
@@ -277,11 +293,14 @@ body {
     padding-inline: 0.5rem;
   }
 
+  .public-site .public-nav-scrolled .public-nav-surface {
+    border-radius: 1.25rem;
+  }
+
   .public-site .public-nav-scrolled .public-nav-inner {
     width: 100%;
     min-height: 3.75rem;
     height: 3.75rem;
-    border-radius: 1.25rem;
     padding-inline: 0.75rem;
   }
 }
@@ -289,6 +308,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .public-site .public-nav,
   .public-site .public-nav-inner,
+  .public-site .public-nav-surface,
   .public-site .public-nav-brand,
   .public-site .public-nav-link,
   .public-site .public-nav-link-line {
@@ -479,7 +499,7 @@ body {
 .public-site .public-artwork-word {
   position: absolute;
   top: 8.2rem;
-  left: 50%;
+  left: clamp(0.35rem, 1.5vw, 1.5rem);
   color: rgba(113, 148, 255, 0.055);
   font-family: var(--lab-font-display);
   font-size: clamp(8rem, 25vw, 27rem);
@@ -487,11 +507,7 @@ body {
   letter-spacing: -0.09em;
   line-height: 0.78;
   pointer-events: none;
-  transform: translate3d(
-    calc(-50% + var(--artwork-scroll-x, 0px)),
-    var(--artwork-scroll-y, 0px),
-    0
-  );
+  transform: translate3d(var(--artwork-scroll-x, 0px), var(--artwork-scroll-y, 0px), 0);
   white-space: nowrap;
   will-change: transform;
 }

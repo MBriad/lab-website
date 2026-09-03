@@ -34,7 +34,7 @@ export function PublicMotionField({ children, className, ...rest }: PublicMotion
           <div className="public-artwork-glow public-motion-layer public-motion-layer-blue" />
           <div className="public-artwork-glow public-motion-layer public-motion-layer-pink" />
           <div className="public-artwork-grid" />
-          <div className="public-artwork-word">ROBOTICS</div>
+          <div className="public-artwork-word">ROBOTICS LAB</div>
           <div className="public-artwork-lens public-motion-layer public-motion-layer-lens-one" />
           <div className="public-artwork-lens public-motion-layer public-motion-layer-lens-two" />
         </div>

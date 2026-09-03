@@ -7,6 +7,10 @@ import type {
   AwardCreate,
   AwardPublic,
   AwardUpdate,
+  GalleryItemAdmin,
+  GalleryItemCreate,
+  GalleryItemPublic,
+  GalleryItemUpdate,
   ListAwardsParams,
   MediaAdmin,
   NewsAdmin,
@@ -46,6 +50,7 @@ export interface ApiClient {
   getProjectBySlug(slug: string): Promise<ProjectPublic>;
   listAwards(params?: ListAwardsParams): Promise<PageResponse<AwardPublic>>;
   getAward(awardId: string): Promise<AwardPublic>;
+  listGallery(params?: PageParams): Promise<PageResponse<GalleryItemPublic>>;
 
   /* ---------------- Auth ---------------- */
   /** Performs the login request and stores the returned bearer token. */
@@ -83,6 +88,16 @@ export interface ApiClient {
   createAward(input: AwardCreate): Promise<AwardAdmin>;
   updateAward(awardId: string, patch: AwardUpdate): Promise<AwardAdmin>;
   deleteAward(awardId: string): Promise<void>;
+
+  /* ---------------- Admin: independent gallery ---------------- */
+  listAdminGallery(params?: PageParams): Promise<PageResponse<GalleryItemAdmin>>;
+  getAdminGallery(galleryId: string): Promise<GalleryItemAdmin>;
+  createGalleryItem(input: GalleryItemCreate): Promise<GalleryItemAdmin>;
+  updateGalleryItem(
+    galleryId: string,
+    patch: GalleryItemUpdate,
+  ): Promise<GalleryItemAdmin>;
+  deleteGalleryItem(galleryId: string): Promise<void>;
 
   /* ---------------- Admin: media ---------------- */
   listAdminMedia(params?: PageParams): Promise<PageResponse<MediaAdmin>>;
@@ -178,6 +193,9 @@ export function createRealApiClient(options: RealApiClientOptions = {}): ApiClie
 
     getAward: (awardId) =>
       call(`/awards/${encodeURIComponent(awardId)}`, { auth: false }),
+
+    listGallery: (params = {}) =>
+      call("/gallery", { auth: false, query: { ...params } }),
 
     /* ---------------- Auth ---------------- */
     login: async (credentials) => {
@@ -288,6 +306,27 @@ export function createRealApiClient(options: RealApiClientOptions = {}): ApiClie
 
     deleteAward: (awardId) =>
       call(`/admin/awards/${encodeURIComponent(awardId)}`, { method: "DELETE" }),
+
+    /* ---------------- Admin: independent gallery ---------------- */
+    listAdminGallery: (params = {}) =>
+      call("/admin/gallery", { query: { ...params } }),
+
+    getAdminGallery: (galleryId) =>
+      call(`/admin/gallery/${encodeURIComponent(galleryId)}`),
+
+    createGalleryItem: (input) =>
+      call("/admin/gallery", { method: "POST", json: input }),
+
+    updateGalleryItem: (galleryId, patch) =>
+      call(`/admin/gallery/${encodeURIComponent(galleryId)}`, {
+        method: "PATCH",
+        json: patch,
+      }),
+
+    deleteGalleryItem: (galleryId) =>
+      call(`/admin/gallery/${encodeURIComponent(galleryId)}`, {
+        method: "DELETE",
+      }),
 
     /* ---------------- Admin: media ---------------- */
     listAdminMedia: (params = {}) =>

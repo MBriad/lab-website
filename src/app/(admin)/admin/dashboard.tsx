@@ -119,6 +119,9 @@ export function Dashboard() {
           <ButtonLink href="/admin/awards/new" prefetch={false} variant="secondary" size="sm">
             新建荣誉
           </ButtonLink>
+          <ButtonLink href="/admin/gallery" prefetch={false} variant="secondary" size="sm">
+            管理影像记录
+          </ButtonLink>
         </div>
       </div>
 

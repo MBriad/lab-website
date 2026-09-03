@@ -108,6 +108,44 @@ export interface MediaAdmin extends MediaPublic {
 }
 
 /* ------------------------------------------------------------------ */
+/* Independent gallery                                                 */
+/* ------------------------------------------------------------------ */
+
+export interface GalleryItemPublic {
+  /** The media UUID is also the stable gallery record identifier. */
+  id: string;
+  title: string;
+  description: string | null;
+  media: MediaPublic;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GalleryItemAdmin extends GalleryItemPublic {
+  media_id: string;
+  is_visible: boolean;
+}
+
+export interface GalleryItemCreate {
+  media_id: string;
+  title: string;
+  description?: string | null;
+  sort_order?: number;
+  is_visible?: boolean;
+}
+
+/** Omit a field to keep it; `null` clears nullable text fields. */
+export interface GalleryItemUpdate {
+  /** Change the bound media; `null` is rejected by the API. */
+  media_id?: string | null;
+  title?: string | null;
+  description?: string | null;
+  sort_order?: number | null;
+  is_visible?: boolean | null;
+}
+
+/* ------------------------------------------------------------------ */
 /* Site settings                                                       */
 /* ------------------------------------------------------------------ */
 

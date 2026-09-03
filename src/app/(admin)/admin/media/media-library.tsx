@@ -19,6 +19,11 @@ import {
   isConflictError,
 } from "@/components/admin/lib/errors";
 import { redirectToLogin } from "@/components/admin/lib/auth";
+import {
+  IMAGE_UPLOAD_ACCEPT,
+  summarizeMediaUploadFailures,
+  uploadMediaFiles,
+} from "@/components/admin/lib/media-upload";
 import { formatBytes, formatDate } from "@/lib/format";
 import type { MediaAdmin } from "@/lib/types/api";
 
@@ -31,22 +36,37 @@ export function MediaLibrary() {
   const { notice, show, dismiss } = useNotice();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    completed: number;
+    total: number;
+  } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MediaAdmin | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files ?? []);
     event.target.value = "";
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      show("error", "仅支持上传图片文件。");
-      return;
-    }
+    if (files.length === 0) return;
+
     setUploading(true);
+    setUploadProgress({ completed: 0, total: files.length });
     try {
-      await api.uploadMedia(file);
-      show("success", `已上传「${file.name}」。`);
-      list.reload();
+      const result = await uploadMediaFiles(files, (completed, total) => {
+        setUploadProgress({ completed, total });
+      });
+      if (result.uploaded.length > 0) list.reload();
+
+      if (result.failures.length > 0) {
+        const summary = summarizeMediaUploadFailures(result.failures);
+        show(
+          "error",
+          result.uploaded.length > 0
+            ? `已上传 ${result.uploaded.length} 张，${summary}`
+            : summary,
+        );
+      } else {
+        show("success", `已上传 ${result.uploaded.length} 张图片。`);
+      }
     } catch (err) {
       if (isAuthError(err)) {
         redirectToLogin(router);
@@ -55,6 +75,7 @@ export function MediaLibrary() {
       show("error", describeApiError(err, "上传失败，请重试"));
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -89,13 +110,14 @@ export function MediaLibrary() {
       <AdminPageHeader
         tag="SEC.06 // MEDIA"
         title="素材库"
-        description="上传图片素材，供新闻、项目、荣誉与站点设置引用。"
+        description="支持一次选择多张图片；MPO 手机照片会自动转成 JPG，供新闻、项目、荣誉与站点设置引用。"
         actions={
           <>
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept={IMAGE_UPLOAD_ACCEPT}
+              multiple
               className="hidden"
               onChange={handleFileChange}
             />
@@ -104,7 +126,9 @@ export function MediaLibrary() {
               loading={uploading}
               onClick={() => fileInputRef.current?.click()}
             >
-              {uploading ? "上传中…" : "上传图片"}
+              {uploading && uploadProgress
+                ? `上传中 ${uploadProgress.completed}/${uploadProgress.total}`
+                : "上传图片"}
             </Button>
           </>
         }
@@ -176,7 +200,9 @@ export function MediaLibrary() {
       {uploading ? (
         <p className="flex items-center gap-2 text-xs text-ink-muted">
           <Spinner className="text-accent" />
-          正在上传，请稍候…
+          {uploadProgress
+            ? `正在上传 ${uploadProgress.completed}/${uploadProgress.total} 张图片，请稍候…`
+            : "正在上传，请稍候…"}
         </p>
       ) : null}
 

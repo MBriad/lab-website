@@ -15,6 +15,10 @@ import type {
   AwardPublic,
   AwardSort,
   AwardUpdate,
+  GalleryItemAdmin,
+  GalleryItemCreate,
+  GalleryItemPublic,
+  GalleryItemUpdate,
   ListAwardsParams,
   MediaAdmin,
   NewsAdmin,
@@ -269,6 +273,18 @@ export function createMockApiClient(): ApiClient {
     };
   }
 
+  function toGalleryPublic(item: GalleryItemAdmin): GalleryItemPublic {
+    return {
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      media: item.media,
+      sort_order: item.sort_order,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    };
+  }
+
   function toSiteSettingsPublic(item: SiteSettingsAdmin): SiteSettingsPublic {
     return {
       key: item.key,
@@ -412,6 +428,22 @@ export function createMockApiClient(): ApiClient {
       const found = db.awards.find((a) => a.id === awardId && a.is_visible);
       if (!found) throw notFound("奖项", awardId);
       return clone(toAwardPublic(found));
+    },
+
+    listGallery: async (params = {}) => {
+      const page = paginate(
+        db.galleryItems
+          .filter((item) => item.is_visible)
+          .sort(
+            (a, b) =>
+              a.sort_order - b.sort_order ||
+              b.created_at.localeCompare(a.created_at),
+          ),
+        params.page,
+        params.page_size,
+        20,
+      );
+      return { ...page, items: page.items.map(toGalleryPublic) };
     },
 
     /* ---------------- Auth ---------------- */
@@ -758,6 +790,82 @@ export function createMockApiClient(): ApiClient {
       db.awards.splice(index, 1);
     },
 
+    /* ---------------- Admin: independent gallery ---------------- */
+
+    listAdminGallery: async (params = {}) => {
+      requireAuth();
+      return paginate(
+        [...db.galleryItems].sort(
+          (a, b) =>
+            a.sort_order - b.sort_order ||
+            b.created_at.localeCompare(a.created_at),
+        ),
+        params.page,
+        params.page_size,
+        50,
+      );
+    },
+
+    getAdminGallery: async (galleryId) => {
+      requireAuth();
+      const found = db.galleryItems.find((item) => item.id === galleryId);
+      if (!found) throw notFound("影像记录", galleryId);
+      return clone(found);
+    },
+
+    createGalleryItem: async (input: GalleryItemCreate) => {
+      requireAuth();
+      if (db.galleryItems.some((item) => item.media_id === input.media_id)) {
+        throw conflict("该素材已经加入影像记录");
+      }
+      const now = nowIso();
+      const created: GalleryItemAdmin = {
+        id: input.media_id,
+        title: input.title,
+        description: input.description ?? null,
+        media: toPublicMedia(requireMedia(input.media_id)),
+        media_id: input.media_id,
+        sort_order: input.sort_order ?? 0,
+        is_visible: input.is_visible ?? false,
+        created_at: now,
+        updated_at: now,
+      };
+      db.galleryItems.push(created);
+      return clone(created);
+    },
+
+    updateGalleryItem: async (galleryId, patch: GalleryItemUpdate) => {
+      requireAuth();
+      const found = db.galleryItems.find((item) => item.id === galleryId);
+      if (!found) throw notFound("影像记录", galleryId);
+      const { media_id: nextMediaId, ...metadata } = patch;
+      if (nextMediaId !== undefined) {
+        if (nextMediaId === null) {
+          throw validationFailed("影像记录必须绑定素材");
+        }
+        if (
+          db.galleryItems.some(
+            (item) => item.id !== found.id && item.media_id === nextMediaId,
+          )
+        ) {
+          throw conflict("该素材已经加入影像记录");
+        }
+        found.id = nextMediaId;
+        found.media_id = nextMediaId;
+        found.media = toPublicMedia(requireMedia(nextMediaId));
+      }
+      applyDefined(found, metadata);
+      found.updated_at = nowIso();
+      return clone(found);
+    },
+
+    deleteGalleryItem: async (galleryId) => {
+      requireAuth();
+      const index = db.galleryItems.findIndex((item) => item.id === galleryId);
+      if (index === -1) throw notFound("影像记录", galleryId);
+      db.galleryItems.splice(index, 1);
+    },
+
     /* ---------------- Admin: media ---------------- */
 
     listAdminMedia: async (params = {}) => {
@@ -808,6 +916,9 @@ export function createMockApiClient(): ApiClient {
       for (const a of db.awards) {
         if (a.certificate_media_id === mediaId) bump("awards");
         if (a.cover_media_id === mediaId) bump("awards");
+      }
+      for (const item of db.galleryItems) {
+        if (item.media_id === mediaId) bump("gallery");
       }
 
       if (refs.size > 0) {

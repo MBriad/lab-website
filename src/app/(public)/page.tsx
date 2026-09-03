@@ -11,7 +11,6 @@ import { Container } from "@/components/ui/container";
 import { ErrorNote } from "@/components/ui/states";
 import { api } from "@/lib/api";
 import { getHomeData } from "@/lib/api/queries";
-import { collectGallery, type GallerySeed } from "@/lib/media";
 
 /**
  * Home metadata comes from site settings; the title intentionally falls
@@ -47,33 +46,6 @@ export default async function HomePage() {
     );
   }
 
-  // Gallery: compose from embedded covers (no public media endpoint exists);
-  // dedupe by media id and cap the strip.
-  const gallerySeeds: GallerySeed[] = [
-    ...home.featuredProjects.map((p) => ({
-      media: p.cover,
-      href: `/projects/${p.slug}`,
-      title: p.title,
-      source: "项目",
-    })),
-    ...home.featuredAwards.flatMap((a) => [
-      {
-        media: a.certificate,
-        href: "/awards",
-        title: `${a.title} · 证书`,
-        source: "荣誉",
-      },
-      { media: a.cover, href: "/awards", title: a.title, source: "荣誉" },
-    ]),
-    ...home.latestNews.map((n) => ({
-      media: n.cover,
-      href: `/news/${n.slug}`,
-      title: n.title,
-      source: "新闻",
-    })),
-  ];
-  const gallery = collectGallery(gallerySeeds, 8);
-
   return (
     <>
       <Hero
@@ -93,7 +65,7 @@ export default async function HomePage() {
       {home.latestNews.length > 0 ? (
         <LatestNews news={home.latestNews.slice(0, 3)} />
       ) : null}
-      {gallery.length > 0 ? <GalleryStrip items={gallery} /> : null}
+      {home.gallery.length > 0 ? <GalleryStrip items={home.gallery} /> : null}
       <ContactSection settings={home.settings} />
     </>
   );
