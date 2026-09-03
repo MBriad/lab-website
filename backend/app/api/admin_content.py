@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from pathlib import Path
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Query, Request, UploadFile, status
@@ -14,6 +15,9 @@ from app.schemas import (
     AwardCreate,
     AwardUpdate,
     ErrorResponse,
+    GalleryItemAdmin,
+    GalleryItemCreate,
+    GalleryItemUpdate,
     MediaAdmin,
     NewsAdmin,
     NewsCreate,
@@ -38,6 +42,7 @@ from app.services.common import (
 )
 from app.services.serializers import (
     award_admin,
+    gallery_item_admin,
     media_admin,
     news_admin,
     project_admin,
@@ -505,6 +510,141 @@ def delete_award(award_id: UUID, db: Session = Depends(get_db)) -> None:
     commit_or_raise(db)
 
 
+def _gallery_query() -> object:
+    return select(Media).where(Media.is_gallery.is_(True))
+
+
+def _clear_gallery_metadata(item: Media) -> None:
+    item.is_gallery = False
+    item.gallery_title = None
+    item.gallery_description = None
+    item.gallery_sort_order = 0
+    item.gallery_is_visible = False
+
+
+@router.get("/gallery", response_model=PageResponse[GalleryItemAdmin])
+def list_admin_gallery(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    query = _gallery_query().order_by(
+        Media.gallery_sort_order.asc(), Media.created_at.desc(), Media.id.asc()
+    )
+    items, total, pages = page_query(db, query, page, page_size)
+    return _page_response(
+        [gallery_item_admin(item, request) for item in items],
+        page,
+        page_size,
+        total,
+        pages,
+    )
+
+
+@router.get(
+    "/gallery/{gallery_id}",
+    response_model=GalleryItemAdmin,
+    responses={404: {"model": ErrorResponse}},
+)
+def get_admin_gallery(
+    gallery_id: UUID, request: Request, db: Session = Depends(get_db)
+) -> GalleryItemAdmin:
+    item = db.scalar(_gallery_query().where(Media.id == gallery_id))
+    if item is None:
+        raise AppError(404, "not_found", "Gallery record was not found")
+    return gallery_item_admin(item, request)
+
+
+@router.post(
+    "/gallery",
+    response_model=GalleryItemAdmin,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_gallery(
+    payload: GalleryItemCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> GalleryItemAdmin:
+    item = get_or_404(db, Media, payload.media_id, "Media")
+    if item.is_gallery:
+        raise AppError(
+            409,
+            "gallery_media_exists",
+            "This media is already an independent gallery record",
+        )
+    item.is_gallery = True
+    item.gallery_title = payload.title
+    item.gallery_description = payload.description
+    item.gallery_sort_order = payload.sort_order
+    item.gallery_is_visible = payload.is_visible
+    commit_or_raise(db)
+    db.refresh(item)
+    return gallery_item_admin(item, request)
+
+
+@router.patch(
+    "/gallery/{gallery_id}",
+    response_model=GalleryItemAdmin,
+    responses={404: {"model": ErrorResponse}},
+)
+def update_gallery(
+    gallery_id: UUID,
+    payload: GalleryItemUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> GalleryItemAdmin:
+    item = db.scalar(_gallery_query().where(Media.id == gallery_id))
+    if item is None:
+        raise AppError(404, "not_found", "Gallery record was not found")
+
+    values = payload.model_dump(exclude_unset=True)
+    target = item
+    requested_media_id = values.pop("media_id", None)
+    if "media_id" in payload.model_fields_set:
+        if requested_media_id is None:
+            raise AppError(
+                422,
+                "invalid_media_reference",
+                "A gallery record must reference a media file",
+            )
+        target = get_or_404(db, Media, requested_media_id, "Media")
+        if target.id != item.id:
+            if target.is_gallery:
+                raise AppError(
+                    409,
+                    "gallery_media_exists",
+                    "This media is already an independent gallery record",
+                )
+            _clear_gallery_metadata(item)
+            target.is_gallery = True
+
+    if "title" in values:
+        target.gallery_title = values["title"]
+    if "description" in values:
+        target.gallery_description = values["description"]
+    if "sort_order" in values:
+        target.gallery_sort_order = values["sort_order"]
+    if "is_visible" in values:
+        target.gallery_is_visible = values["is_visible"]
+    commit_or_raise(db)
+    db.refresh(target)
+    return gallery_item_admin(target, request)
+
+
+@router.delete(
+    "/gallery/{gallery_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={404: {"model": ErrorResponse}},
+)
+def delete_gallery(gallery_id: UUID, db: Session = Depends(get_db)) -> None:
+    item = db.scalar(_gallery_query().where(Media.id == gallery_id))
+    if item is None:
+        raise AppError(404, "not_found", "Gallery record was not found")
+    _clear_gallery_metadata(item)
+    commit_or_raise(db)
+
+
 @router.get("/media", response_model=PageResponse[MediaAdmin])
 def list_admin_media(
     request: Request,
@@ -522,7 +662,10 @@ def list_admin_media(
 @router.post("/media", response_model=MediaAdmin, status_code=status.HTTP_201_CREATED)
 def upload_media(
     request: Request,
-    upload: UploadFile = File(..., description="An image file"),
+    upload: UploadFile = File(
+        ...,
+        description="A JPEG, PNG, WebP, GIF, or MPO image (MPO is normalized to JPEG)",
+    ),
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> MediaAdmin:
@@ -545,13 +688,28 @@ def upload_media(
 
     from PIL import Image, UnidentifiedImageError
 
+    normalized_name = normalize_filename(upload.filename or "upload")
     try:
         with Image.open(BytesIO(content)) as image:
             image.verify()
         with Image.open(BytesIO(content)) as image:
             width, height = image.size
             detected_mime = Image.MIME.get(image.format)
-    except (UnidentifiedImageError, OSError) as exc:
+            if detected_mime == "image/mpo":
+                # MPO files are JPEG containers with multiple frames. Browsers
+                # do not consistently render them, so keep the first frame as
+                # a standard JPEG while preserving the original filename stem.
+                image.seek(0)
+                frame = image.convert("RGB")
+                try:
+                    converted = BytesIO()
+                    frame.save(converted, format="JPEG", quality=92, optimize=True)
+                    content = converted.getvalue()
+                finally:
+                    frame.close()
+                detected_mime = "image/jpeg"
+                normalized_name = f"{Path(normalized_name).stem or 'upload'}.jpg"
+    except (UnidentifiedImageError, OSError, ValueError) as exc:
         raise AppError(
             422, "invalid_image", "The uploaded file is not a valid image"
         ) from exc
@@ -565,9 +723,12 @@ def upload_media(
             "image_dimensions_too_large",
             "The image exceeds the configured pixel limit",
         )
+    if len(content) > settings.max_upload_bytes:
+        raise AppError(
+            413, "upload_too_large", "The image exceeds the configured byte limit"
+        )
 
     storage = LocalMediaStorage(settings.media_root)
-    normalized_name = normalize_filename(upload.filename or "upload")
     storage_key = storage.save(content, normalized_name, detected_mime)
     item = Media(
         original_name=normalized_name,
@@ -599,6 +760,9 @@ def _media_references(db: Session, media_id: UUID) -> bool:
         )
         .limit(1),
         select(SiteSettings.key).where(SiteSettings.logo_media_id == media_id).limit(1),
+        select(Media.id)
+        .where(Media.id == media_id, Media.is_gallery.is_(True))
+        .limit(1),
     )
     return any(db.scalar(query) is not None for query in reference_queries)
 
@@ -616,7 +780,9 @@ def delete_media(
     item = get_or_404(db, Media, media_id, "Media")
     if _media_references(db, media_id):
         raise AppError(
-            409, "media_in_use", "Detach this media from content before deleting it"
+            409,
+            "media_in_use",
+            "Detach this media from content or gallery before deleting it",
         )
     storage_key = item.storage_key
     db.delete(item)

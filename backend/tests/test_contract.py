@@ -30,3 +30,11 @@ def test_checked_in_openapi_contract_is_current():
         )
         assert url_schema["format"] == "uri"
         assert url_schema["pattern"] == r"^https?://"
+
+    gallery_create = contract["components"]["schemas"]["GalleryItemCreate"]
+    assert gallery_create["required"] == ["media_id", "title"]
+    assert (
+        "media" in contract["components"]["schemas"]["GalleryItemPublic"]["properties"]
+    )
+    assert "/api/v1/gallery" in contract["paths"]
+    assert "/api/v1/admin/gallery" in contract["paths"]

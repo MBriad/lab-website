@@ -64,6 +64,17 @@ class Media(TimestampMixin, Base):
     width: Mapped[int | None] = mapped_column(Integer, nullable=True)
     height: Mapped[int | None] = mapped_column(Integer, nullable=True)
     storage_key: Mapped[str] = mapped_column(String(512), unique=True, nullable=False)
+    # Gallery presentation metadata intentionally lives on the existing media
+    # resource instead of introducing a polymorphic media relationship table.
+    # A media file becomes an independent gallery record when `is_gallery` is
+    # enabled through the gallery admin API.
+    is_gallery: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    gallery_title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    gallery_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gallery_sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    gallery_is_visible: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
 
 
 class Admin(TimestampMixin, Base):

@@ -76,6 +76,49 @@ HttpUrlValue = Annotated[
 ]
 
 
+class GalleryItemCreate(BaseModel):
+    """Create an independent visual-archive record for an existing media file."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    media_id: UUID
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=10_000)
+    sort_order: int = Field(default=0, ge=0)
+    is_visible: bool = False
+
+    _title = field_validator("title")(validate_text)
+
+
+class GalleryItemUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # Omitted means keep the current media; null is rejected by the route so a
+    # gallery record can never lose its required image reference.
+    media_id: UUID | None = None
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=10_000)
+    sort_order: int | None = Field(default=None, ge=0)
+    is_visible: bool | None = None
+
+    _title = field_validator("title")(validate_text)
+
+
+class GalleryItemPublic(BaseModel):
+    id: UUID
+    title: str
+    description: str | None
+    media: MediaPublic
+    sort_order: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class GalleryItemAdmin(GalleryItemPublic):
+    media_id: UUID
+    is_visible: bool
+
+
 class NewsCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

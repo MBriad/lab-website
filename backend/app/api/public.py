@@ -14,6 +14,7 @@ from app.schemas import (
     AwardPublic,
     AwardSort,
     ErrorResponse,
+    GalleryItemPublic,
     NewsPublic,
     PageResponse,
     ProjectPublic,
@@ -23,6 +24,7 @@ from app.schemas import (
 from app.services.common import page_query
 from app.services.serializers import (
     award_public,
+    gallery_item_public,
     news_public,
     project_public,
     research_area_public,
@@ -245,6 +247,35 @@ def get_site_settings(
 ) -> SiteSettingsPublic:
     item = _get_or_create_settings(db)
     return site_settings_public(item, request)
+
+
+@router.get(
+    "/gallery",
+    response_model=PageResponse[GalleryItemPublic],
+    responses={422: {"model": ErrorResponse}},
+    summary="List visible gallery records",
+)
+def list_gallery(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    query = (
+        select(Media)
+        .where(Media.is_gallery.is_(True), Media.gallery_is_visible.is_(True))
+        .order_by(
+            Media.gallery_sort_order.asc(), Media.created_at.desc(), Media.id.asc()
+        )
+    )
+    items, total, pages = page_query(db, query, page, page_size)
+    return _page_response(
+        [gallery_item_public(item, request) for item in items],
+        page,
+        page_size,
+        total,
+        pages,
+    )
 
 
 @router.get(

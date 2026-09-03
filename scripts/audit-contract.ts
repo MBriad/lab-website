@@ -16,11 +16,23 @@
  * Usage: pnpm audit:contract   (exit code 1 on any drift)
  */
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 const FRONTEND_ROOT = path.resolve(__dirname, "..");
-const OPENAPI_PATH = path.resolve(FRONTEND_ROOT, "../contracts/openapi.json");
+// The frontend can be checked out on its own (with the contract in a sibling
+// directory) or as the repository root in the merged Docker layout. Resolve
+// both supported shapes without changing the API boundary.
+const OPENAPI_PATH = (() => {
+  const candidate = [
+    path.resolve(FRONTEND_ROOT, "contracts/openapi.json"),
+    path.resolve(FRONTEND_ROOT, "../contracts/openapi.json"),
+  ].find((entry) => existsSync(entry));
+  if (!candidate) {
+    throw new Error("contracts/openapi.json was not found");
+  }
+  return candidate;
+})();
 const SRC_DIR = path.join(FRONTEND_ROOT, "src");
 const TYPES_FILE = path.join(SRC_DIR, "lib/types/api.ts");
 const CLIENT_FILE = path.join(SRC_DIR, "lib/api/client.ts");

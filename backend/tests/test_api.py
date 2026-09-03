@@ -116,6 +116,94 @@ def test_media_upload_and_reference_safe_delete(client, session_factory):
     assert client.get(f"/api/v1/media/{media['storage_key']}").status_code == 200
 
 
+def test_independent_gallery_crud_and_public_visibility(client, session_factory):
+    token = login(client, session_factory)
+    headers = {"Authorization": f"Bearer {token}"}
+    image = Image.new("RGB", (6, 4), color="blue")
+    image_bytes = BytesIO()
+    image.save(image_bytes, format="JPEG")
+    upload = client.post(
+        "/api/v1/admin/media",
+        headers=headers,
+        files={"upload": ("gallery.jpg", image_bytes.getvalue(), "image/jpeg")},
+    )
+    assert upload.status_code == 201, upload.text
+    media = upload.json()
+
+    created = client.post(
+        "/api/v1/admin/gallery",
+        headers=headers,
+        json={
+            "media_id": media["id"],
+            "title": "现场调试记录",
+            "description": "机器人平台在赛场完成最终调试。",
+            "sort_order": 2,
+            "is_visible": True,
+        },
+    )
+    assert created.status_code == 201, created.text
+    record = created.json()
+    assert record["id"] == media["id"]
+    assert record["media_id"] == media["id"]
+    assert record["title"] == "现场调试记录"
+
+    public = client.get("/api/v1/gallery")
+    assert public.status_code == 200
+    assert [item["title"] for item in public.json()["items"]] == ["现场调试记录"]
+
+    duplicate = client.post(
+        "/api/v1/admin/gallery",
+        headers=headers,
+        json={"media_id": media["id"], "title": "重复记录"},
+    )
+    assert duplicate.status_code == 409
+    assert duplicate.json()["error"]["code"] == "gallery_media_exists"
+
+    updated = client.patch(
+        f"/api/v1/admin/gallery/{media['id']}",
+        headers=headers,
+        json={"is_visible": False, "title": "隐藏的现场记录"},
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["is_visible"] is False
+    assert client.get("/api/v1/gallery").json()["items"] == []
+
+    removed = client.delete(f"/api/v1/admin/gallery/{media['id']}", headers=headers)
+    assert removed.status_code == 204, removed.text
+    assert (
+        client.get(f"/api/v1/admin/gallery/{media['id']}", headers=headers).status_code
+        == 404
+    )
+    assert (
+        client.delete(f"/api/v1/admin/media/{media['id']}", headers=headers).status_code
+        == 204
+    )
+
+
+def test_mpo_upload_is_normalized_to_browser_jpeg(client, session_factory):
+    token = login(client, session_factory)
+    headers = {"Authorization": f"Bearer {token}"}
+    first = Image.new("RGB", (4, 3), color="red")
+    second = Image.new("RGB", (4, 3), color="blue")
+    image_bytes = BytesIO()
+    first.save(image_bytes, format="MPO", save_all=True, append_images=[second])
+
+    upload = client.post(
+        "/api/v1/admin/media",
+        headers=headers,
+        files={"upload": ("phone-photo.jpg", image_bytes.getvalue(), "image/jpeg")},
+    )
+
+    assert upload.status_code == 201, upload.text
+    media = upload.json()
+    assert media["mime_type"] == "image/jpeg"
+    assert media["original_name"] == "phone-photo.jpg"
+    assert media["storage_key"].endswith(".jpg")
+    served = client.get(f"/api/v1/media/{media['storage_key']}")
+    assert served.status_code == 200
+    assert served.headers["content-type"].startswith("image/jpeg")
+
+
 def test_admin_content_and_settings_workflows(client, session_factory):
     token = login(client, session_factory)
     headers = {"Authorization": f"Bearer {token}"}

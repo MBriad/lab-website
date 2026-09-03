@@ -7,6 +7,8 @@ from app.schemas import (
     AdminPublic,
     AwardAdmin,
     AwardPublic,
+    GalleryItemAdmin,
+    GalleryItemPublic,
     MediaAdmin,
     MediaPublic,
     NewsAdmin,
@@ -43,6 +45,28 @@ def media_admin(media: Media, request: Request) -> MediaAdmin:
         storage_key=media.storage_key,
         created_at=media.created_at,
         updated_at=media.updated_at,
+    )
+
+
+def gallery_item_public(item: Media, request: Request) -> GalleryItemPublic:
+    public = media_public(item, request)
+    assert public is not None
+    return GalleryItemPublic(
+        id=item.id,
+        title=item.gallery_title or item.original_name,
+        description=item.gallery_description,
+        media=public,
+        sort_order=item.gallery_sort_order,
+        created_at=item.created_at,
+        updated_at=item.updated_at,
+    )
+
+
+def gallery_item_admin(item: Media, request: Request) -> GalleryItemAdmin:
+    return GalleryItemAdmin(
+        **gallery_item_public(item, request).model_dump(),
+        media_id=item.id,
+        is_visible=item.gallery_is_visible,
     )
 
 

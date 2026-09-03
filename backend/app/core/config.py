@@ -25,7 +25,9 @@ class Settings(BaseSettings):
     media_root: Path = Path("./backend/data/media")
     max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1024)
     max_image_pixels: int = Field(default=25_000_000, ge=1_000_000)
-    allowed_image_mimes: str = "image/jpeg,image/png,image/webp,image/gif"
+    # MPO is produced by some phone cameras and WeChat exports. The upload
+    # route normalizes it to a browser-friendly JPEG after validation.
+    allowed_image_mimes: str = "image/jpeg,image/png,image/webp,image/gif,image/mpo"
 
     @property
     def cors_origins(self) -> list[str]:

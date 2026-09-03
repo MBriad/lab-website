@@ -57,6 +57,12 @@ def test_initial_migration_creates_only_the_core_schema(tmp_path: Path) -> None:
             column["name"]: column for column in inspect(engine).get_columns("projects")
         }
         assert project_columns["demo_url"]["nullable"] is True
+        media_columns = {
+            column["name"]: column for column in inspect(engine).get_columns("media")
+        }
+        assert media_columns["is_gallery"]["nullable"] is False
+        assert media_columns["gallery_sort_order"]["nullable"] is False
+        assert media_columns["gallery_is_visible"]["nullable"] is False
         research_columns = {
             column["name"]: column
             for column in inspect(engine).get_columns("research_areas")
@@ -79,6 +85,9 @@ def test_initial_migration_creates_only_the_core_schema(tmp_path: Path) -> None:
     try:
         assert "demo_url" not in {
             column["name"] for column in inspect(engine).get_columns("projects")
+        }
+        assert "is_gallery" not in {
+            column["name"] for column in inspect(engine).get_columns("media")
         }
         assert "representative_project_id" not in {
             column["name"] for column in inspect(engine).get_columns("research_areas")
@@ -183,5 +192,80 @@ def test_homepage_migration_backfills_existing_rows(tmp_path: Path) -> None:
                 )
             ).one()
             assert area == ("[]", None)
+    finally:
+        engine.dispose()
+
+
+def test_gallery_migration_promotes_public_cover_media(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[2]
+    database_url = f"sqlite:///{(tmp_path / 'gallery-legacy.db').as_posix()}"
+    run_alembic(project_root, database_url, "upgrade", "0001_initial")
+
+    engine = create_engine(database_url)
+    cover_id = uuid4()
+    certificate_id = uuid4()
+    news_id = uuid4()
+    award_id = uuid4()
+    now = datetime.now(timezone.utc)
+    try:
+        with engine.begin() as connection:
+            for media_id, name in (
+                (cover_id, "scene.jpg"),
+                (certificate_id, "certificate.jpg"),
+            ):
+                connection.execute(
+                    text(
+                        "INSERT INTO media "
+                        "(id, original_name, mime_type, size_bytes, storage_key, "
+                        "created_at, updated_at) "
+                        "VALUES (:id, :name, 'image/jpeg', 10, :key, :now, :now)"
+                    ),
+                    {
+                        "id": str(media_id),
+                        "name": name,
+                        "key": f"media/{media_id}.jpg",
+                        "now": now,
+                    },
+                )
+            connection.execute(
+                text(
+                    "INSERT INTO news "
+                    "(id, slug, title, content, cover_media_id, sort_order, "
+                    "is_visible, published_at, created_at, updated_at) "
+                    "VALUES (:id, 'legacy-scene', 'Legacy scene', 'Archive', "
+                    ":media_id, 3, 1, :now, :now, :now)"
+                ),
+                {"id": str(news_id), "media_id": str(cover_id), "now": now},
+            )
+            connection.execute(
+                text(
+                    "INSERT INTO awards "
+                    "(id, title, category, level, issuer, competition_name, "
+                    "description, award_date, year, certificate_media_id, "
+                    "sort_order, is_featured, is_visible, created_at, updated_at) "
+                    "VALUES (:id, 'Legacy award', 'honor', 'national', 'Lab', "
+                    "'Competition', 'Archive', '2025-01-01', 2025, :media_id, "
+                    "0, 0, 1, :now, :now)"
+                ),
+                {"id": str(award_id), "media_id": str(certificate_id), "now": now},
+            )
+    finally:
+        engine.dispose()
+
+    run_alembic(project_root, database_url, "upgrade", "head")
+    engine = create_engine(database_url)
+    try:
+        with engine.connect() as connection:
+            records = {
+                row[0]: row[1:]
+                for row in connection.execute(
+                    text(
+                        "SELECT id, is_gallery, gallery_title, gallery_is_visible "
+                        "FROM media"
+                    )
+                )
+            }
+        assert records[str(cover_id)] == (1, "Legacy scene", 1)
+        assert records[str(certificate_id)] == (0, None, 0)
     finally:
         engine.dispose()
