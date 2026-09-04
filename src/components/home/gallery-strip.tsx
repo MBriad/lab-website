@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { InteractiveMedia } from "@/components/motion/interactive-media";
 import { Reveal } from "@/components/motion/reveal";
 import { useHorizontalRail } from "@/components/motion/use-horizontal-rail";
@@ -121,6 +122,14 @@ function GalleryRail({ items }: GalleryStripProps) {
               <GalleryRailCard item={item} />
             </Reveal>
           ))}
+        </div>
+        <div className="mt-2 flex justify-end">
+          <Link
+            href="/gallery"
+            className="font-mono text-xs tracking-[0.2em] text-accent uppercase transition-transform hover:translate-x-1"
+          >
+            查看完整影像记录 →
+          </Link>
         </div>
       </Container>
     </section>

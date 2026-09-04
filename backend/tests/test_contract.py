@@ -38,3 +38,16 @@ def test_checked_in_openapi_contract_is_current():
     )
     assert "/api/v1/gallery" in contract["paths"]
     assert "/api/v1/admin/gallery" in contract["paths"]
+
+    for schema_name in ("SiteSettingsPublic", "SiteSettingsAdmin"):
+        properties = contract["components"]["schemas"][schema_name]["properties"]
+        assert properties["homepage_featured_awards_limit"]["minimum"] == 1
+        assert properties["homepage_featured_awards_limit"]["maximum"] == 20
+        assert properties["homepage_gallery_limit"]["minimum"] == 1
+        assert properties["homepage_gallery_limit"]["maximum"] == 20
+
+    update_properties = contract["components"]["schemas"]["SiteSettingsUpdate"][
+        "properties"
+    ]
+    assert update_properties["homepage_featured_awards_limit"]["maximum"] == 20
+    assert update_properties["homepage_gallery_limit"]["maximum"] == 20

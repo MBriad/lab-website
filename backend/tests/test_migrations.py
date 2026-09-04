@@ -53,6 +53,8 @@ def test_initial_migration_creates_only_the_core_schema(tmp_path: Path) -> None:
         assert site_columns["core_platforms"]["nullable"] is False
         assert site_columns["paper_count"]["nullable"] is False
         assert site_columns["trained_student_count"]["nullable"] is False
+        assert site_columns["homepage_featured_awards_limit"]["nullable"] is False
+        assert site_columns["homepage_gallery_limit"]["nullable"] is False
         project_columns = {
             column["name"]: column for column in inspect(engine).get_columns("projects")
         }
@@ -172,7 +174,8 @@ def test_homepage_migration_backfills_existing_rows(tmp_path: Path) -> None:
             settings = connection.execute(
                 text(
                     "SELECT site_title, lab_name, core_platforms, paper_count, "
-                    "patent_count, active_project_count, trained_student_count "
+                    "patent_count, active_project_count, trained_student_count, "
+                    "homepage_featured_awards_limit, homepage_gallery_limit "
                     "FROM site_settings WHERE key = 'default'"
                 )
             ).one()
@@ -184,6 +187,8 @@ def test_homepage_migration_backfills_existing_rows(tmp_path: Path) -> None:
                 0,
                 0,
                 0,
+                8,
+                8,
             )
             area = connection.execute(
                 text(

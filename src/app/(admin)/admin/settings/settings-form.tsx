@@ -31,6 +31,8 @@ const PHONE_MAX = 80;
 const PLATFORM_MAX = 120;
 const YEAR_MIN = 1800;
 const YEAR_MAX = 2200;
+const SHOWCASE_LIMIT_MIN = 1;
+const SHOWCASE_LIMIT_MAX = 20;
 
 interface FormState {
   site_title: string;
@@ -47,6 +49,8 @@ interface FormState {
   patent_count: string;
   active_project_count: string;
   trained_student_count: string;
+  homepage_featured_awards_limit: string;
+  homepage_gallery_limit: string;
   papers_url: string;
   join_url: string;
   cooperation_url: string;
@@ -76,6 +80,8 @@ const EMPTY_FORM: FormState = {
   patent_count: "0",
   active_project_count: "0",
   trained_student_count: "0",
+  homepage_featured_awards_limit: "8",
+  homepage_gallery_limit: "8",
   papers_url: "",
   join_url: "",
   cooperation_url: "",
@@ -125,6 +131,8 @@ export function SettingsForm() {
           patent_count: String(settings.patent_count),
           active_project_count: String(settings.active_project_count),
           trained_student_count: String(settings.trained_student_count),
+          homepage_featured_awards_limit: String(settings.homepage_featured_awards_limit),
+          homepage_gallery_limit: String(settings.homepage_gallery_limit),
           papers_url: settings.papers_url ?? "",
           join_url: settings.join_url ?? "",
           cooperation_url: settings.cooperation_url ?? "",
@@ -179,6 +187,12 @@ export function SettingsForm() {
       const value = Number(form[key]);
       if (!Number.isInteger(value) || value < 0) errors[key] = "请输入不小于 0 的整数。";
     }
+    for (const key of ["homepage_featured_awards_limit", "homepage_gallery_limit"] as const) {
+      const value = Number(form[key]);
+      if (!Number.isInteger(value) || value < SHOWCASE_LIMIT_MIN || value > SHOWCASE_LIMIT_MAX) {
+        errors[key] = `请输入 ${SHOWCASE_LIMIT_MIN} 至 ${SHOWCASE_LIMIT_MAX} 的整数。`;
+      }
+    }
     const platforms = form.core_platforms.split("\n").map((item) => item.trim()).filter(Boolean);
     if (platforms.length > 8 || platforms.some((item) => item.length > PLATFORM_MAX)) errors.core_platforms = "最多填写 8 个平台，每项不超过 120 个字符。";
     for (const key of ["papers_url", "join_url", "cooperation_url"] as const) {
@@ -221,6 +235,8 @@ export function SettingsForm() {
       patent_count: Number(form.patent_count),
       active_project_count: Number(form.active_project_count),
       trained_student_count: Number(form.trained_student_count),
+      homepage_featured_awards_limit: Number(form.homepage_featured_awards_limit),
+      homepage_gallery_limit: Number(form.homepage_gallery_limit),
       papers_url: emptyToNull(form.papers_url),
       join_url: emptyToNull(form.join_url),
       cooperation_url: emptyToNull(form.cooperation_url),
@@ -373,6 +389,49 @@ export function SettingsForm() {
               onChange={(e) => setField("hero_subtitle", e.target.value)}
             />
           </Field>
+        </AdminCard>
+
+        <AdminCard className="space-y-4">
+          <AdminCardHeading
+            title="首页展示数量"
+            description="仅限制首页展示数量；荣誉精选、影像记录的可见状态与排序请在对应管理页维护。"
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="精选荣誉数量"
+              htmlFor="settings-homepage-featured-awards-limit"
+              error={fieldErrors.homepage_featured_awards_limit}
+              hint="仅显示标记为首页精选的荣誉。"
+            >
+              <Input
+                id="settings-homepage-featured-awards-limit"
+                type="number"
+                min={SHOWCASE_LIMIT_MIN}
+                max={SHOWCASE_LIMIT_MAX}
+                step={1}
+                value={form.homepage_featured_awards_limit}
+                onChange={(e) => setField("homepage_featured_awards_limit", e.target.value)}
+                invalid={Boolean(fieldErrors.homepage_featured_awards_limit)}
+              />
+            </Field>
+            <Field
+              label="影像记录数量"
+              htmlFor="settings-homepage-gallery-limit"
+              error={fieldErrors.homepage_gallery_limit}
+              hint="按影像记录管理页的可见状态与排序展示。"
+            >
+              <Input
+                id="settings-homepage-gallery-limit"
+                type="number"
+                min={SHOWCASE_LIMIT_MIN}
+                max={SHOWCASE_LIMIT_MAX}
+                step={1}
+                value={form.homepage_gallery_limit}
+                onChange={(e) => setField("homepage_gallery_limit", e.target.value)}
+                invalid={Boolean(fieldErrors.homepage_gallery_limit)}
+              />
+            </Field>
+          </div>
         </AdminCard>
 
         <AdminCard className="space-y-4">

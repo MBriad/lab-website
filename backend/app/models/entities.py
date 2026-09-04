@@ -255,6 +255,12 @@ class SiteSettings(TimestampMixin, Base):
     trained_student_count: Mapped[int] = mapped_column(
         Integer, default=0, nullable=False
     )
+    homepage_featured_awards_limit: Mapped[int] = mapped_column(
+        Integer, default=8, nullable=False
+    )
+    homepage_gallery_limit: Mapped[int] = mapped_column(
+        Integer, default=8, nullable=False
+    )
     papers_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     join_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     cooperation_url: Mapped[str | None] = mapped_column(String(500), nullable=True)

@@ -305,6 +305,8 @@ export function createMockApiClient(): ApiClient {
       patent_count: item.patent_count,
       active_project_count: item.active_project_count,
       trained_student_count: item.trained_student_count,
+      homepage_featured_awards_limit: item.homepage_featured_awards_limit,
+      homepage_gallery_limit: item.homepage_gallery_limit,
       papers_url: item.papers_url,
       join_url: item.join_url,
       cooperation_url: item.cooperation_url,
@@ -322,6 +324,18 @@ export function createMockApiClient(): ApiClient {
   /* ---------------- Shared admin logic ---------------- */
 
   function patchSettings(patch: SiteSettingsUpdate): SiteSettingsAdmin {
+    for (const key of [
+      "homepage_featured_awards_limit",
+      "homepage_gallery_limit",
+    ] as const) {
+      const value = patch[key];
+      if (
+        value !== undefined &&
+        (!Number.isInteger(value) || value < 1 || value > 20)
+      ) {
+        throw validationFailed(`${key} 必须是 1 至 20 的整数`);
+      }
+    }
     if (patch.logo_media_id) {
       db.settings.logo = toPublicMedia(requireMedia(patch.logo_media_id));
     } else if (patch.logo_media_id === null) {

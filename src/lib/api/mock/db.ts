@@ -145,6 +145,8 @@ export function createSeedDb(): MockDb {
     patent_count: 11,
     active_project_count: 8,
     trained_student_count: 126,
+    homepage_featured_awards_limit: 8,
+    homepage_gallery_limit: 8,
     papers_url: "https://example.com/xinghang/publications",
     join_url: "https://example.com/xinghang/join",
     cooperation_url: "https://example.com/xinghang/cooperation",
