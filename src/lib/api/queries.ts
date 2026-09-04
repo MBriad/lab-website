@@ -29,7 +29,7 @@ export interface HomeData {
    * list as its featured set.
   */
   featuredProjects: ProjectPublic[];
-  /** Featured awards with certificate media for the honors rail. */
+  /** Featured awards selected by the administrator for the honors rail. */
   featuredAwards: AwardPublic[];
   /** Independently curated visual-archive records. */
   gallery: GalleryItemPublic[];
@@ -42,23 +42,26 @@ export async function getHomeData(): Promise<HomeData> {
     api.getSiteSettings(),
     api.listResearchAreas({ page: 1, page_size: 50 }),
     api.listProjects({ page: 1, page_size: 3 }),
-    api.listAwards({ featured: true, sort: "date_desc", page: 1, page_size: 50 }),
+    api.listAwards({ featured: true, sort: "date_desc", page: 1, page_size: 20 }),
     api.listNews({ page: 1, page_size: 4 }),
-    api.listGallery({ page: 1, page_size: 8 }),
+    api.listGallery({ page: 1, page_size: 20 }),
   ]);
 
-  // The API already returns the featured set in date order, so filtering keeps
-  // the editorial order and the slice simply caps the honors rail.
-  const featuredAwards = awards.items
-    .filter((award) => award.certificate !== null)
-    .slice(0, 3);
+  // Both APIs already filter out non-public records and preserve their public
+  // editorial order. Site Settings only caps each homepage rail; it never
+  // changes award featured state or gallery visibility/order.
+  const featuredAwards = awards.items.slice(
+    0,
+    settings.homepage_featured_awards_limit,
+  );
+  const galleryItems = gallery.items.slice(0, settings.homepage_gallery_limit);
 
   return {
     settings,
     researchAreas: research.items,
     featuredProjects: projects.items,
     featuredAwards,
-    gallery: gallery.items,
+    gallery: galleryItems,
     latestNews: news.items,
   };
 }
@@ -88,4 +91,11 @@ export function getAwardsPage(
   params: ListAwardsParams = {},
 ): Promise<PageResponse<AwardPublic>> {
   return api.listAwards(params);
+}
+
+/** Paginated public visual archive. */
+export function getGalleryPage(
+  params: PageParams = {},
+): Promise<PageResponse<GalleryItemPublic>> {
+  return api.listGallery(params);
 }

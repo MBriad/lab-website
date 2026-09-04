@@ -404,6 +404,8 @@ class SiteSettingsUpdate(BaseModel):
     patent_count: int = Field(default=None, ge=0)
     active_project_count: int = Field(default=None, ge=0)
     trained_student_count: int = Field(default=None, ge=0)
+    homepage_featured_awards_limit: int = Field(default=None, ge=1, le=20)
+    homepage_gallery_limit: int = Field(default=None, ge=1, le=20)
     papers_url: HttpUrlValue | None = None
     join_url: HttpUrlValue | None = None
     cooperation_url: HttpUrlValue | None = None
@@ -444,6 +446,8 @@ class SiteSettingsPublic(BaseModel):
     patent_count: int = Field(ge=0)
     active_project_count: int = Field(ge=0)
     trained_student_count: int = Field(ge=0)
+    homepage_featured_awards_limit: int = Field(ge=1, le=20)
+    homepage_gallery_limit: int = Field(ge=1, le=20)
     papers_url: HttpUrlValue | None
     join_url: HttpUrlValue | None
     cooperation_url: HttpUrlValue | None

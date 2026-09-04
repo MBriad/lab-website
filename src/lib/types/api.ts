@@ -168,6 +168,8 @@ export interface SiteSettingsPublic {
   patent_count: number;
   active_project_count: number;
   trained_student_count: number;
+  homepage_featured_awards_limit: number;
+  homepage_gallery_limit: number;
   papers_url: string | null;
   join_url: string | null;
   cooperation_url: string | null;
@@ -207,6 +209,8 @@ export interface SiteSettingsUpdate {
   patent_count?: number;
   active_project_count?: number;
   trained_student_count?: number;
+  homepage_featured_awards_limit?: number;
+  homepage_gallery_limit?: number;
   papers_url?: string | null;
   join_url?: string | null;
   cooperation_url?: string | null;

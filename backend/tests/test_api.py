@@ -282,6 +282,8 @@ def test_homepage_settings_and_content_extensions(client, session_factory):
         "patent_count": 5,
         "active_project_count": 3,
         "trained_student_count": 28,
+        "homepage_featured_awards_limit": 8,
+        "homepage_gallery_limit": 12,
         "papers_url": "https://example.com/papers",
         "join_url": "https://example.com/join",
         "cooperation_url": "https://example.com/cooperate",
@@ -299,10 +301,18 @@ def test_homepage_settings_and_content_extensions(client, session_factory):
     public_settings = client.get("/api/v1/site-settings")
     assert public_settings.status_code == 200
     assert public_settings.json()["trained_student_count"] == 28
+    assert public_settings.json()["homepage_featured_awards_limit"] == 8
+    assert public_settings.json()["homepage_gallery_limit"] == 12
 
     invalid_settings = (
         {"paper_count": -1},
         {"founded_year": 1799},
+        {"homepage_featured_awards_limit": 0},
+        {"homepage_featured_awards_limit": 21},
+        {"homepage_featured_awards_limit": 1.5},
+        {"homepage_gallery_limit": 0},
+        {"homepage_gallery_limit": 21},
+        {"homepage_gallery_limit": 1.5},
         {"core_platforms": ["  "]},
         {"core_platforms": ["platform"] * 9},
         {"papers_url": "ftp://example.com/papers"},

@@ -199,6 +199,27 @@ describe("site settings PATCH semantics", () => {
     expect(after.paper_count).toBe(0);
     expect(after.join_url).toBeNull();
   });
+
+  it("round-trips bounded homepage showcase limits", async () => {
+    const api = makeClient();
+    expect((await api.getSiteSettings()).homepage_featured_awards_limit).toBe(8);
+    expect((await api.getSiteSettings()).homepage_gallery_limit).toBe(8);
+
+    await api.login({ username: "admin", password: "admin123" });
+    await api.updateSiteSettings({
+      homepage_featured_awards_limit: 5,
+      homepage_gallery_limit: 12,
+    });
+    const after = await api.getSiteSettings();
+    expect(after.homepage_featured_awards_limit).toBe(5);
+    expect(after.homepage_gallery_limit).toBe(12);
+    await expect(
+      api.updateSiteSettings({ homepage_featured_awards_limit: 0 }),
+    ).rejects.toMatchObject({ status: 422 });
+    await expect(
+      api.updateSiteSettings({ homepage_gallery_limit: 21 }),
+    ).rejects.toMatchObject({ status: 422 });
+  });
 });
 
 describe("homepage extension projections and round trips", () => {

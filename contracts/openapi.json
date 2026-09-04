@@ -2822,6 +2822,18 @@
             ],
             "title": "Hero Title"
           },
+          "homepage_featured_awards_limit": {
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Homepage Featured Awards Limit",
+            "type": "integer"
+          },
+          "homepage_gallery_limit": {
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Homepage Gallery Limit",
+            "type": "integer"
+          },
           "join_url": {
             "anyOf": [
               {
@@ -2982,6 +2994,8 @@
           "patent_count",
           "active_project_count",
           "trained_student_count",
+          "homepage_featured_awards_limit",
+          "homepage_gallery_limit",
           "papers_url",
           "join_url",
           "cooperation_url",
@@ -3146,6 +3160,18 @@
             ],
             "title": "Hero Title"
           },
+          "homepage_featured_awards_limit": {
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Homepage Featured Awards Limit",
+            "type": "integer"
+          },
+          "homepage_gallery_limit": {
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Homepage Gallery Limit",
+            "type": "integer"
+          },
           "join_url": {
             "anyOf": [
               {
@@ -3294,6 +3320,8 @@
           "patent_count",
           "active_project_count",
           "trained_student_count",
+          "homepage_featured_awards_limit",
+          "homepage_gallery_limit",
           "papers_url",
           "join_url",
           "cooperation_url",
@@ -3459,6 +3487,18 @@
               }
             ],
             "title": "Hero Title"
+          },
+          "homepage_featured_awards_limit": {
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Homepage Featured Awards Limit",
+            "type": "integer"
+          },
+          "homepage_gallery_limit": {
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Homepage Gallery Limit",
+            "type": "integer"
           },
           "join_url": {
             "anyOf": [
