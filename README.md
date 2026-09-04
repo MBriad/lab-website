@@ -1,94 +1,120 @@
-# Robotics Laboratory Website + Admin UI
+# 东莞理工学院机器人创新实验室
 
-Next.js (App Router) frontend for the university robotics laboratory site:
-public website (`/`, `/research`, `/projects`, `/awards`, `/news`) and a
-content management console under `/admin/**`. Data access is centralized in
-`src/lib/api/` and typed from `contracts/openapi.json`.
+这是一个面向大学机器人实验室的宣传网站与内容管理系统，包含公开官网、管理员后台、FastAPI CMS 接口和 PostgreSQL 数据库。网站以机器人研发、竞赛成果和实验室动态为核心内容，提供沉浸式首页、研究方向、项目、荣誉、新闻和影像记录页面。
 
-## Stack
+![机器人实验室标志](public/robotlab/robotlab-wordmark.png)
 
-- Next.js 16 (App Router, Turbopack), React 19, TypeScript strict
-- Tailwind CSS 4 (CSS-first tokens in `src/app/globals.css`)
-- Package manager: pnpm
+## 界面与内容预览
 
-## Scripts
+首页和详情页通过统一的数据层读取 CMS 内容；影像记录页支持横向浏览和分页归档。仓库内已保留一组脱敏后的媒体快照，克隆后即可看到与当前项目一致的基础内容。
 
-| Command          | Description                                        |
-| ---------------- | -------------------------------------------------- |
-| `pnpm dev`       | Start the dev server (http://localhost:3000)       |
-| `pnpm build`     | Production build                                   |
-| `pnpm start`     | Serve the production build                         |
-| `pnpm lint`      | ESLint                                             |
-| `pnpm typecheck` | `tsc --noEmit`                                     |
-| `pnpm test`      | Vitest unit tests (data layer + pure helpers)      |
-| `pnpm audit:contract` | Verify the data layer against `contracts/openapi.json` |
+| 竞赛现场 | 荣誉证书 | 实验室成果 |
+| --- | --- | --- |
+| ![竞赛现场](backend/data/media/3961/2541b3d6dbd95b8d502d9c409b2f8d49.jpg) | ![荣誉证书](backend/data/media/20d5/a2db93b2c2da69c2fe81a176be578125.jpg) | ![实验室成果](backend/data/media/404b/7454901809aaa4a2446c1e4330e33ad8.jpg) |
 
-## API modes
+## 主要功能
 
-The data layer switches between two implementations of the same `ApiClient`
-interface, selected by `NEXT_PUBLIC_API_MODE` (see `.env.example`):
+- 官网：`/`、`/research`、`/projects`、`/awards`、`/news`、`/gallery`
+- 管理后台：`/admin/login`、`/admin`、新闻、项目、研究方向、荣誉、影像记录、素材库和网站设置
+- 荣誉和影像记录支持媒体关联、排序、显示/隐藏和首页精选数量配置
+- 首页精选荣誉与影像记录数量可在后台分别设置，范围为 1–20 条
+- 图片通过素材库上传和复用，内容记录只保存媒体 ID，不直接保存文件
+- OpenAPI 契约位于 [`contracts/openapi.json`](contracts/openapi.json)，是前后端唯一正式接口约定
 
-- **`real` (default, including when the variable is unset)** — HTTP against the CMS backend defined by
-  `contracts/openapi.json`. The HTTP client sends every request with
-  `cache: "no-store"` (see `src/lib/api/http.ts`), which opts each data
-  route out of build-time prerendering: pages render per request, content
-  is never frozen into static HTML, and the build succeeds even when the
-  backend is unreachable. (Next 16 requires route segment config such as
-  `export const dynamic` to be a static string literal, so the mode switch
-  lives in the data layer instead of per-route exports.)
-- **`mock` (explicit opt-in only)** — deterministic in-memory fixtures; no
-  backend needed. Public pages are statically prerendered at build time.
-  Admin credentials: `admin` / `admin123`.
+## 技术栈
 
-Mock mode is intentionally isolated: the browser-side admin client and the
-server-rendered public site can own separate in-memory fixture databases, so
-admin edits are not persistent and are not guaranteed to appear on public
-pages. Use real mode whenever testing CMS publishing or data synchronization.
-Because real mode is the default, local public pages need the backend service
-running; without it, data-driven sections show their load-failure state.
+- Next.js 16、React 19、TypeScript
+- Tailwind CSS 4
+- FastAPI、SQLAlchemy 2、Alembic
+- PostgreSQL（部署）/ SQLite（本地测试）
+- Docker Compose：前端、后端、数据库分别运行在私有网络中
+- pnpm、Vitest、Pytest
 
-### Pointing at the real backend
+## 本地运行前端
 
-Copy `.env.example` to `.env.local` and configure the backend origin. Real mode
-is already the default, but it can be stated explicitly:
-
-```bash
-NEXT_PUBLIC_API_MODE=real
-NEXT_PUBLIC_API_BASE_URL=/api/v1
-BACKEND_ORIGIN=http://127.0.0.1:8000
+```powershell
+pnpm install
+Copy-Item .env.example .env.local
+pnpm dev
 ```
 
-Start the Codex backend first (see `backend/`), then run `pnpm dev`. For a
-frontend-only visual session, explicitly set `NEXT_PUBLIC_API_MODE=mock` and
-do not expect admin edits to persist or synchronize with server-rendered pages.
+默认实时模式需要后端服务运行。如果只进行前端视觉开发，可以在 `.env.local` 中显式设置：
 
-How the wiring works:
+```dotenv
+NEXT_PUBLIC_API_MODE=mock
+```
 
-- **Browser:** requests go to the relative prefix `NEXT_PUBLIC_API_BASE_URL`
-  (default `/api/v1`); `next.config.ts` rewrites `/api/v1/*` to
-  `BACKEND_ORIGIN`, avoiding CORS during development.
-- **Server components:** relative URLs are not fetchable server-side, so the
-  API client automatically prefixes `BACKEND_ORIGIN` when rendering on the
-  server (see `resolveApiBaseUrl` in `src/lib/api/client.ts`).
-- **Images:** `BACKEND_ORIGIN` is allow-listed in `next.config.ts` remote
-  patterns so uploaded media can be optimized by `next/image`.
-- Setting `NEXT_PUBLIC_API_BASE_URL` to an absolute URL bypasses the proxy
-  entirely (browser and server both use it as-is).
+Mock 模式使用确定性测试数据；管理员登录账号为 `admin`，密码为 `admin123`。需要验证后台修改同步到官网时，请使用实时 API 模式。
 
-### Auth in real mode
+## 本地运行后端
 
-Login (`/admin/login`) stores the bearer token from
-`POST /api/v1/admin/auth/login` in `localStorage` (memory slot server-side).
-Every admin request sends `Authorization: Bearer <token>`; a `401` clears
-the token and redirects to `/admin/login`. There are no cookie sessions.
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r backend/requirements.txt
+$env:DATABASE_URL = "sqlite:///./backend/data/cms.local.db"
+alembic -c backend/alembic.ini upgrade head
+python backend/scripts/create_admin.py admin "use-a-local-password"
+uvicorn app.main:app --app-dir backend --reload
+```
 
-## Project layout
+后端公开接口统一位于 `/api/v1`，管理接口位于 `/api/v1/admin`，具体请求和响应以 OpenAPI 契约为准。
 
-- `src/lib/api/` — the only place that talks to data: `ApiClient` interface,
-  real HTTP client, mock adapter, bearer-token store, server read helpers.
-- `src/lib/types/api.ts` — contract-exact types derived from
-  `contracts/openapi.json` (no invented fields).
-- `src/app/(public)/` — public site routes (static prerender in mock mode).
-- `src/app/(admin)/admin/` — admin console (noindex, auth-guarded).
-- `src/components/` — public components, motion primitives, admin UI.
-- `public/mock-media/` — deterministic placeholder images used by mock data.
+## Docker 部署
+
+从仓库根目录执行：
+
+```powershell
+Copy-Item infra/.env.example infra/.env
+# 编辑 infra/.env，替换密钥和数据库密码
+docker compose --env-file infra/.env -f infra/docker-compose.yml up --build -d
+```
+
+浏览器访问 `http://localhost:3000`，或使用主机的局域网地址和 `FRONTEND_PORT`。三个容器分别为：
+
+| 服务 | 容器端口 | 说明 |
+| --- | ---: | --- |
+| `frontend` | 3000 | 官网和后台，代理 `/api/v1` |
+| `backend` | 8000 | FastAPI CMS，不默认暴露主机端口 |
+| `postgres` | 5432 | PostgreSQL，仅在 Docker 私有网络中可访问 |
+
+数据库和上传媒体分别使用 Docker volume 持久化。停止服务时不要使用 `down -v`，除非确定要删除数据卷：
+
+```powershell
+docker compose --env-file infra/.env -f infra/docker-compose.yml ps
+docker compose --env-file infra/.env -f infra/docker-compose.yml logs -f frontend backend
+docker compose --env-file infra/.env -f infra/docker-compose.yml down
+```
+
+## 质量检查
+
+前端：
+
+```powershell
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm audit:contract
+pnpm build
+```
+
+后端：
+
+```powershell
+python backend/scripts/check_contract.py
+python -m pytest backend/tests
+```
+
+## 目录说明
+
+- `src/`：Next.js 官网、后台和组件
+- `backend/app/`：FastAPI、模型、服务和 API 路由
+- `backend/alembic/`：数据库迁移
+- `backend/data/media/`：随仓库提供的脱敏媒体快照
+- `contracts/`：OpenAPI API Contract
+- `infra/`：Docker Compose、镜像和启动脚本
+- `public/`：网站标志、工具图标和 Mock 图片
+
+## 许可与内容说明
+
+仓库中的媒体快照仅用于本项目展示和部署初始化。生产环境请通过后台素材库替换或补充实际媒体，并妥善配置管理员密码、`SECRET_KEY` 和数据库密码。不要提交 `.env`、访问令牌或其他敏感信息。
