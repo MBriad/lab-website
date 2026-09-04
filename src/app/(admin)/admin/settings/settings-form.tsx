@@ -57,6 +57,8 @@ interface FormState {
   social_bilibili: string;
   social_email: string;
   logo: MediaPublic | null;
+  contact_qr_primary: MediaPublic | null;
+  contact_qr_secondary: MediaPublic | null;
 }
 
 const EMPTY_FORM: FormState = {
@@ -84,6 +86,8 @@ const EMPTY_FORM: FormState = {
   social_bilibili: "",
   social_email: "",
   logo: null,
+  contact_qr_primary: null,
+  contact_qr_secondary: null,
 };
 
 /**
@@ -131,6 +135,8 @@ export function SettingsForm() {
           social_bilibili: settings.social_bilibili ?? "",
           social_email: settings.social_email ?? "",
           logo: settings.logo,
+          contact_qr_primary: settings.contact_qr_primary,
+          contact_qr_secondary: settings.contact_qr_secondary,
         });
         setLoading(false);
       })
@@ -225,12 +231,23 @@ export function SettingsForm() {
       social_bilibili: emptyToNull(form.social_bilibili),
       social_email: emptyToNull(form.social_email),
       logo_media_id: form.logo ? form.logo.id : null,
+      contact_qr_primary_media_id: form.contact_qr_primary
+        ? form.contact_qr_primary.id
+        : null,
+      contact_qr_secondary_media_id: form.contact_qr_secondary
+        ? form.contact_qr_secondary.id
+        : null,
     };
 
     setSubmitting(true);
     try {
       const saved = await api.updateSiteSettings(patch);
-      setForm((prev) => ({ ...prev, logo: saved.logo }));
+      setForm((prev) => ({
+        ...prev,
+        logo: saved.logo,
+        contact_qr_primary: saved.contact_qr_primary,
+        contact_qr_secondary: saved.contact_qr_secondary,
+      }));
       show("success", "站点设置已保存。");
       router.refresh();
     } catch (err) {
@@ -458,6 +475,24 @@ export function SettingsForm() {
                 invalid={Boolean(fieldErrors.contact_phone)}
               />
             </Field>
+          </div>
+          <div className="grid gap-5 border-t border-hairline pt-5 sm:grid-cols-2">
+            <MediaPickerField
+              label="联系方式二维码 1"
+              value={form.contact_qr_primary}
+              onChange={(media: MediaAdmin | null) =>
+                setField("contact_qr_primary", media)
+              }
+              hint="可从素材库选择或上传，用于前台联系方式区域。"
+            />
+            <MediaPickerField
+              label="联系方式二维码 2"
+              value={form.contact_qr_secondary}
+              onChange={(media: MediaAdmin | null) =>
+                setField("contact_qr_secondary", media)
+              }
+              hint="可选；留空时前台只显示第一个二维码。"
+            />
           </div>
         </AdminCard>
 

@@ -2693,6 +2693,50 @@
             ],
             "title": "Contact Phone"
           },
+          "contact_qr_primary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MediaPublic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contact_qr_primary_media_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Qr Primary Media Id"
+          },
+          "contact_qr_secondary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MediaPublic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contact_qr_secondary_media_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Qr Secondary Media Id"
+          },
           "cooperation_url": {
             "anyOf": [
               {
@@ -2942,12 +2986,16 @@
           "join_url",
           "cooperation_url",
           "logo",
+          "contact_qr_primary",
+          "contact_qr_secondary",
           "social_github",
           "social_bilibili",
           "social_email",
           "created_at",
           "updated_at",
-          "logo_media_id"
+          "logo_media_id",
+          "contact_qr_primary_media_id",
+          "contact_qr_secondary_media_id"
         ],
         "title": "SiteSettingsAdmin",
         "type": "object"
@@ -2992,6 +3040,26 @@
               }
             ],
             "title": "Contact Phone"
+          },
+          "contact_qr_primary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MediaPublic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contact_qr_secondary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MediaPublic"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "cooperation_url": {
             "anyOf": [
@@ -3230,6 +3298,8 @@
           "join_url",
           "cooperation_url",
           "logo",
+          "contact_qr_primary",
+          "contact_qr_secondary",
           "social_github",
           "social_bilibili",
           "social_email",
@@ -3282,6 +3352,30 @@
               }
             ],
             "title": "Contact Phone"
+          },
+          "contact_qr_primary_media_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Qr Primary Media Id"
+          },
+          "contact_qr_secondary_media_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Qr Secondary Media Id"
           },
           "cooperation_url": {
             "anyOf": [

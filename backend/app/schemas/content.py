@@ -408,6 +408,8 @@ class SiteSettingsUpdate(BaseModel):
     join_url: HttpUrlValue | None = None
     cooperation_url: HttpUrlValue | None = None
     logo_media_id: UUID | None = None
+    contact_qr_primary_media_id: UUID | None = None
+    contact_qr_secondary_media_id: UUID | None = None
     social_github: str | None = Field(default=None, max_length=500)
     social_bilibili: str | None = Field(default=None, max_length=500)
     social_email: EmailStr | None = None
@@ -446,6 +448,8 @@ class SiteSettingsPublic(BaseModel):
     join_url: HttpUrlValue | None
     cooperation_url: HttpUrlValue | None
     logo: MediaPublic | None
+    contact_qr_primary: MediaPublic | None
+    contact_qr_secondary: MediaPublic | None
     social_github: str | None
     social_bilibili: str | None
     social_email: EmailStr | None
@@ -455,6 +459,8 @@ class SiteSettingsPublic(BaseModel):
 
 class SiteSettingsAdmin(SiteSettingsPublic):
     logo_media_id: UUID | None
+    contact_qr_primary_media_id: UUID | None
+    contact_qr_secondary_media_id: UUID | None
 
 
 class AdminLoginRequest(BaseModel):

@@ -223,6 +223,8 @@ def site_settings_public(item: SiteSettings, request: Request) -> SiteSettingsPu
         join_url=item.join_url,
         cooperation_url=item.cooperation_url,
         logo=media_public(item.logo_media, request),
+        contact_qr_primary=media_public(item.contact_qr_primary_media, request),
+        contact_qr_secondary=media_public(item.contact_qr_secondary_media, request),
         social_github=item.social_github,
         social_bilibili=item.social_bilibili,
         social_email=item.social_email,
@@ -235,6 +237,8 @@ def site_settings_admin(item: SiteSettings, request: Request) -> SiteSettingsAdm
     return SiteSettingsAdmin(
         **site_settings_public(item, request).model_dump(),
         logo_media_id=item.logo_media_id,
+        contact_qr_primary_media_id=item.contact_qr_primary_media_id,
+        contact_qr_secondary_media_id=item.contact_qr_secondary_media_id,
     )
 
 

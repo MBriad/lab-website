@@ -760,6 +760,14 @@ def _media_references(db: Session, media_id: UUID) -> bool:
         )
         .limit(1),
         select(SiteSettings.key).where(SiteSettings.logo_media_id == media_id).limit(1),
+        select(SiteSettings.key)
+        .where(
+            or_(
+                SiteSettings.contact_qr_primary_media_id == media_id,
+                SiteSettings.contact_qr_secondary_media_id == media_id,
+            )
+        )
+        .limit(1),
         select(Media.id)
         .where(Media.id == media_id, Media.is_gallery.is_(True))
         .limit(1),
@@ -813,8 +821,13 @@ def _update_site_settings(
         item = SiteSettings(key="default")
         db.add(item)
     values = payload.model_dump(exclude_unset=True)
-    if "logo_media_id" in values:
-        ensure_media_exists(db, values["logo_media_id"])
+    for media_field in (
+        "logo_media_id",
+        "contact_qr_primary_media_id",
+        "contact_qr_secondary_media_id",
+    ):
+        if media_field in values:
+            ensure_media_exists(db, values[media_field])
     _stringify_urls(values, "papers_url", "join_url", "cooperation_url")
     update_model(item, values)
     commit_or_raise(db)
