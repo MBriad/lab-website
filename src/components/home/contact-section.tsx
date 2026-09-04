@@ -2,6 +2,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { Container } from "@/components/ui/container";
 import { HudLink } from "@/components/ui/hud-link";
 import { SectionHeader } from "@/components/ui/section-header";
+import { MediaImage } from "@/components/ui/media-image";
 import type { SiteSettingsPublic } from "@/lib/types/api";
 
 export interface ContactSectionProps {
@@ -154,6 +155,32 @@ export function ContactSection({ settings }: ContactSectionProps) {
                   <p className="text-sm text-ink-muted">联系方式整理中。</p>
                 ) : null}
               </dl>
+              {settings.contact_qr_primary || settings.contact_qr_secondary ? (
+                <div className="mt-8 border-t border-hairline pt-6">
+                  <p className="font-mono text-[10px] tracking-[0.25em] text-ink-faint uppercase">
+                    QR // 扫码联系
+                  </p>
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    {[settings.contact_qr_primary, settings.contact_qr_secondary]
+                      .filter((media): media is NonNullable<typeof media> => Boolean(media))
+                      .map((media, index) => (
+                        <figure key={media.id} className="space-y-2">
+                          <MediaImage
+                            media={media}
+                            alt={`联系方式二维码 ${index + 1}`}
+                            mode="cover"
+                            className="aspect-square w-full rounded-hud border border-hairline bg-white p-2"
+                            imgClassName="object-contain"
+                            sizes="(min-width: 1024px) 180px, 40vw"
+                          />
+                          <figcaption className="text-center font-mono text-[10px] tracking-[0.16em] text-ink-faint">
+                            QR 0{index + 1}
+                          </figcaption>
+                        </figure>
+                      ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </Reveal>
         </div>

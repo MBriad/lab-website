@@ -309,6 +309,8 @@ export function createMockApiClient(): ApiClient {
       join_url: item.join_url,
       cooperation_url: item.cooperation_url,
       logo: item.logo,
+      contact_qr_primary: item.contact_qr_primary,
+      contact_qr_secondary: item.contact_qr_secondary,
       social_github: item.social_github,
       social_bilibili: item.social_bilibili,
       social_email: item.social_email,
@@ -324,6 +326,20 @@ export function createMockApiClient(): ApiClient {
       db.settings.logo = toPublicMedia(requireMedia(patch.logo_media_id));
     } else if (patch.logo_media_id === null) {
       db.settings.logo = null;
+    }
+    if (patch.contact_qr_primary_media_id) {
+      db.settings.contact_qr_primary = toPublicMedia(
+        requireMedia(patch.contact_qr_primary_media_id),
+      );
+    } else if (patch.contact_qr_primary_media_id === null) {
+      db.settings.contact_qr_primary = null;
+    }
+    if (patch.contact_qr_secondary_media_id) {
+      db.settings.contact_qr_secondary = toPublicMedia(
+        requireMedia(patch.contact_qr_secondary_media_id),
+      );
+    } else if (patch.contact_qr_secondary_media_id === null) {
+      db.settings.contact_qr_secondary = null;
     }
     applyDefined(db.settings, patch);
     db.settings.updated_at = nowIso();
@@ -908,7 +924,12 @@ export function createMockApiClient(): ApiClient {
       const bump = (entity: string): void => {
         refs.set(entity, (refs.get(entity) ?? 0) + 1);
       };
-      if (db.settings.logo_media_id === mediaId) bump("site-settings");
+      if (
+        db.settings.logo_media_id === mediaId ||
+        db.settings.contact_qr_primary_media_id === mediaId ||
+        db.settings.contact_qr_secondary_media_id === mediaId
+      )
+        bump("site-settings");
       for (const n of db.news) if (n.cover_media_id === mediaId) bump("news");
       for (const p of db.projects) {
         if (p.cover_media_id === mediaId) bump("projects");

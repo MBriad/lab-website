@@ -261,9 +261,21 @@ class SiteSettings(TimestampMixin, Base):
     logo_media_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("media.id", ondelete="RESTRICT"), nullable=True
     )
+    contact_qr_primary_media_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("media.id", ondelete="RESTRICT"), nullable=True
+    )
+    contact_qr_secondary_media_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("media.id", ondelete="RESTRICT"), nullable=True
+    )
     social_github: Mapped[str | None] = mapped_column(String(500), nullable=True)
     social_bilibili: Mapped[str | None] = mapped_column(String(500), nullable=True)
     social_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     logo_media: Mapped[Media | None] = relationship(
         "Media", foreign_keys=[logo_media_id]
+    )
+    contact_qr_primary_media: Mapped[Media | None] = relationship(
+        "Media", foreign_keys=[contact_qr_primary_media_id]
+    )
+    contact_qr_secondary_media: Mapped[Media | None] = relationship(
+        "Media", foreign_keys=[contact_qr_secondary_media_id]
     )

@@ -172,6 +172,8 @@ export interface SiteSettingsPublic {
   join_url: string | null;
   cooperation_url: string | null;
   logo: MediaPublic | null;
+  contact_qr_primary: MediaPublic | null;
+  contact_qr_secondary: MediaPublic | null;
   social_github: string | null;
   social_bilibili: string | null;
   social_email: string | null;
@@ -182,6 +184,8 @@ export interface SiteSettingsPublic {
 /** Admin view adds the writable media reference. */
 export interface SiteSettingsAdmin extends SiteSettingsPublic {
   logo_media_id: string | null;
+  contact_qr_primary_media_id: string | null;
+  contact_qr_secondary_media_id: string | null;
 }
 
 /** All fields optional; omit to keep, `null` to clear. */
@@ -207,6 +211,8 @@ export interface SiteSettingsUpdate {
   join_url?: string | null;
   cooperation_url?: string | null;
   logo_media_id?: string | null;
+  contact_qr_primary_media_id?: string | null;
+  contact_qr_secondary_media_id?: string | null;
   social_github?: string | null;
   social_bilibili?: string | null;
   social_email?: string | null;
